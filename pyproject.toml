@@ -1,0 +1,30 @@
+[tool.poetry]
+name = "setup.py"
+version = "0.0.1"
+description = ""
+authors = ["abersheeran <me@abersheeran.com>"]
+readme = "README.md"
+license = "Apache-2.0"
+
+homepage = "https://github.com/abersheeran/setup.py"
+repository = "https://github.com/abersheeran/setup.py"
+documentation = "https://github.com/abersheeran/setup.py/wiki"
+
+classifiers=[
+    "Programming Language :: Python :: 3",
+]
+
+packages = [
+    { include = "setup.py" },
+]
+
+[tool.poetry.dependencies]
+python = "^3.7"
+
+[tool.poetry.dev-dependencies]
+mkdocs = "^1.0.4"
+mkdocs-material = "^4.6.0"
+
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"
