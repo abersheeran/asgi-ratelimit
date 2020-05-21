@@ -63,7 +63,7 @@ typed-ast = ">=1.4.0"
 d = ["aiohttp (>=3.3.2)", "aiohttp-cors"]
 
 [[package]]
-category = "main"
+category = "dev"
 description = "Python package for providing Mozilla's CA Bundle."
 name = "certifi"
 optional = false
@@ -71,7 +71,7 @@ python-versions = "*"
 version = "2020.4.5.1"
 
 [[package]]
-category = "main"
+category = "dev"
 description = "Universal encoding detector for Python 2 and 3"
 name = "chardet"
 optional = false
@@ -145,7 +145,7 @@ python = "<3.8"
 version = "*"
 
 [[package]]
-category = "main"
+category = "dev"
 description = "A pure-Python, bring-your-own-I/O implementation of HTTP/1.1"
 name = "h11"
 optional = false
@@ -153,7 +153,7 @@ python-versions = "*"
 version = "0.9.0"
 
 [[package]]
-category = "main"
+category = "dev"
 description = "HTTP/2 State-Machine based protocol implementation"
 name = "h2"
 optional = false
@@ -165,7 +165,7 @@ hpack = ">=3.0,<4"
 hyperframe = ">=5.2.0,<6"
 
 [[package]]
-category = "main"
+category = "dev"
 description = "Pure-Python HPACK header compression"
 name = "hpack"
 optional = false
@@ -173,7 +173,7 @@ python-versions = "*"
 version = "3.0.0"
 
 [[package]]
-category = "main"
+category = "dev"
 description = "Chromium HSTS Preload list as a Python package and updated daily"
 name = "hstspreload"
 optional = false
@@ -181,12 +181,12 @@ python-versions = ">=3.6"
 version = "2020.5.19"
 
 [[package]]
-category = "main"
+category = "dev"
 description = "A minimal low-level HTTP client."
 name = "httpcore"
 optional = false
 python-versions = ">=3.6"
-version = "0.8.4"
+version = "0.9.0"
 
 [package.dependencies]
 h11 = ">=0.8,<0.10"
@@ -194,7 +194,7 @@ h2 = ">=3.0.0,<4.0.0"
 sniffio = ">=1.0.0,<2.0.0"
 
 [[package]]
-category = "main"
+category = "dev"
 description = "The next generation HTTP client."
 name = "httpx"
 optional = false
@@ -211,7 +211,7 @@ rfc3986 = ">=1.3,<2"
 sniffio = "*"
 
 [[package]]
-category = "main"
+category = "dev"
 description = "HTTP/2 framing layer for Python"
 name = "hyperframe"
 optional = false
@@ -219,7 +219,7 @@ python-versions = "*"
 version = "5.2.0"
 
 [[package]]
-category = "main"
+category = "dev"
 description = "Internationalized Domain Names in Applications (IDNA)"
 name = "idna"
 optional = false
@@ -423,7 +423,7 @@ python-versions = "*"
 version = "2020.5.14"
 
 [[package]]
-category = "main"
+category = "dev"
 description = "Validating URI References per RFC 3986"
 name = "rfc3986"
 optional = false
@@ -439,10 +439,10 @@ description = "Python 2 and 3 compatibility utilities"
 name = "six"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*"
-version = "1.14.0"
+version = "1.15.0"
 
 [[package]]
-category = "main"
+category = "dev"
 description = "Sniff out which async library your code is running under"
 name = "sniffio"
 optional = false
@@ -503,7 +503,7 @@ testing = ["jaraco.itertools", "func-timeout"]
 redis = ["aredis"]
 
 [metadata]
-content-hash = "21cfacad9695fa632c82fd0512979f76a652e09da09621b0efd4ea60cd11d836"
+content-hash = "0ecb0c17bc9da5883fa6feaa772e1a9fdd62957d9322a10dc655c73e3a5941b7"
 python-versions = "^3.6"
 
 [metadata.files]
@@ -603,8 +603,8 @@ hstspreload = [
     {file = "hstspreload-2020.5.19.tar.gz", hash = "sha256:d703d771d47035ad9298c14b84b8293a33fcbbfe6deedeeb35fa7e46dc3c619e"},
 ]
 httpcore = [
-    {file = "httpcore-0.8.4-py3-none-any.whl", hash = "sha256:a123992061cf9e5cb7aca8e04902d4eb8384df9a6df42588215b664a7fc6156d"},
-    {file = "httpcore-0.8.4.tar.gz", hash = "sha256:a4cede6adccb5629b17f1051d16609434ebf08d6f40cc1ea26e22cae5945ec30"},
+    {file = "httpcore-0.9.0-py3-none-any.whl", hash = "sha256:d6187f7642b1745037253eb5798dee7f17f85c5534a65e2de4daa11627486a0a"},
+    {file = "httpcore-0.9.0.tar.gz", hash = "sha256:f77ea2e5fecd58d2b049a2efd706788b1808b73c2367479a0f4a49f6e391cba7"},
 ]
 httpx = [
     {file = "httpx-0.13.0.dev2-py3-none-any.whl", hash = "sha256:91f68e53a1d9ba40e38b11ee82223ee5b4fd29e117ef5bf41cd9f78aac6159d2"},
@@ -731,8 +731,8 @@ rfc3986 = [
     {file = "rfc3986-1.4.0.tar.gz", hash = "sha256:112398da31a3344dc25dbf477d8df6cb34f9278a94fee2625d89e4514be8bb9d"},
 ]
 six = [
-    {file = "six-1.14.0-py2.py3-none-any.whl", hash = "sha256:8f3cd2e254d8f793e7f3d6d9df77b92252b52637291d0f0da013c76ea2724b6c"},
-    {file = "six-1.14.0.tar.gz", hash = "sha256:236bdbdce46e6e6a3d61a337c0f8b763ca1e8717c03b369e87a7ec7ce1319c0a"},
+    {file = "six-1.15.0-py2.py3-none-any.whl", hash = "sha256:8b74bedcbbbaca38ff6d7491d76f2b06b3592611af620f8426e82dddb04a5ced"},
+    {file = "six-1.15.0.tar.gz", hash = "sha256:30639c035cdb23534cd4aa2dd52c3bf48f06e5f4a941509c8bafd8ce11080259"},
 ]
 sniffio = [
     {file = "sniffio-1.1.0-py3-none-any.whl", hash = "sha256:20ed6d5b46f8ae136d00b9dcb807615d83ed82ceea6b2058cecb696765246da5"},
