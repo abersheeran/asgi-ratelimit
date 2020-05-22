@@ -31,5 +31,6 @@ from ratelimit.auths.ip import client_ip
         ),
     ],
 )
-def test_client_ip(scope, real_ip):
-    assert client_ip(scope)[0] == real_ip
+@pytest.mark.asyncio
+async def test_client_ip(scope, real_ip):
+    assert (await client_ip(scope))[0] == real_ip

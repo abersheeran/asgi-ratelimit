@@ -4,7 +4,7 @@ from ipaddress import ip_address
 from ..types import Scope
 
 
-def client_ip(scope: Scope) -> Tuple[str, str]:
+async def client_ip(scope: Scope) -> Tuple[str, str]:
     """
     parse ip
     """

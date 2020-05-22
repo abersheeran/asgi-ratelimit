@@ -1,5 +1,5 @@
 import re
-from typing import Dict, Sequence, Tuple, Callable
+from typing import Dict, Sequence, Tuple, Callable, Awaitable
 
 from .types import ASGIApp, Scope, Receive, Send
 from .backends import BaseBackend
@@ -14,7 +14,7 @@ class RateLimitMiddleware:
     def __init__(
         self,
         app: ASGIApp,
-        authenticate: Callable[[Scope], Tuple[str, str]],
+        authenticate: Callable[[Scope], Awaitable[Tuple[str, str]]],
         backend: BaseBackend,
         config: Dict[str, Sequence[Rule]],
     ) -> None:
@@ -33,7 +33,7 @@ class RateLimitMiddleware:
                 # After finding the first rule that can match the path,
                 # calculate the user ID and group
                 if user is None and group is None:
-                    user, group = self.authenticate(scope)
+                    user, group = await self.authenticate(scope)
 
                 # Select the first rule that can be matched
                 _rules = [rule for rule in rules if group == rule.group]

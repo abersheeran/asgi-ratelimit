@@ -23,7 +23,7 @@ from ratelimit import RateLimitMiddleware, Rule
 from ratelimit.backends.redis import RedisBackend
 
 
-def AUTH_FUNCTION(scope) -> Tuple[str, str]:
+async def AUTH_FUNCTION(scope) -> Tuple[str, str]:
     """
     Resolve the user's unique identifier and the user's group from ASGI SCOPE.
 

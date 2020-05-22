@@ -21,7 +21,7 @@ async def hello_world(scope, receive, send):
     await send({"type": "http.response.disconnect"})
 
 
-def auth_func(scope):
+async def auth_func(scope):
     headers = scope["headers"]
     user, group = None, None
     for name, value in headers:  # type: bytes, bytes
@@ -31,7 +31,6 @@ def auth_func(scope):
             group = value.decode("utf8")
     user = user or "no-user"
     group = group or "no-group"
-    print(user, group)
     return user, group
 
 
