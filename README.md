@@ -22,7 +22,8 @@ from typing import Tuple
 from ratelimit import RateLimitMiddleware, Rule
 from ratelimit.backends.redis import RedisBackend
 
-def auth_function(scope) -> Tuple[str, str]:
+
+def AUTH_FUNCTION(scope) -> Tuple[str, str]:
     """
     Resolve the user's unique identifier and the user's group from ASGI SCOPE.
 
@@ -41,3 +42,13 @@ rate_limit = RateLimitMiddleware(
     },
 )
 ```
+
+### Built-in auth functions
+
+Client IP
+
+```python
+from ratelimit.auths.ip import client_ip
+```
+
+Obtain user IP through `scope["client"]` or `X-Forwarded-For` / `X-Real-IP`.
