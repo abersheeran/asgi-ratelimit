@@ -29,7 +29,9 @@ def auth_func(scope):
             user = value.decode("utf8")
         if name == b"group":
             group = value.decode("utf8")
-    assert user and group
+    user = user or "no-user"
+    group = group or "no-group"
+    print(user, group)
     return user, group
 
 
@@ -42,7 +44,7 @@ async def test_redis():
         RedisBackend(),
         {
             "/second_limit": [Rule(second=1), Rule(group="admin")],
-            "/minute_limit": [Rule(minute=1), Rule(group="admin")],
+            "/minute.*": [Rule(minute=1), Rule(group="admin")],
         },
     )
     async with httpx.AsyncClient(

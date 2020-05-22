@@ -1,3 +1,4 @@
+import re
 from typing import Dict, Sequence, Tuple, Callable
 
 from .types import ASGIApp, Scope, Receive, Send
@@ -20,18 +21,27 @@ class RateLimitMiddleware:
         self.app = app
         self.authenticate = authenticate
         self.backend = backend
-        self.config = config
+        self.config: Dict[re.Pattern, Sequence[Rule]] = {
+            re.compile(path): value for path, value in config.items()
+        }
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         url_path = scope["path"]
-        if url_path not in self.config:
+        user, group = None, None
+        for pattern, rules in self.config.items():
+            if pattern.match(url_path):
+                # After finding the first rule that can match the path,
+                # calculate the user ID and group
+                if user is None and group is None:
+                    user, group = self.authenticate(scope)
+
+                # Select the first rule that can be matched
+                _rules = [rule for rule in rules if group == rule.group]
+                if _rules:
+                    rule = _rules[0]
+                    break
+        else:  # If no rule can match, run `self.app` and return
             return await self.app(scope, receive, send)
-
-        user, group = self.authenticate(scope)
-
-        for rule in self.config[url_path]:
-            if group == rule.group:
-                break
 
         has_rule = bool([name for name in RULENAMES if getattr(rule, name) is not None])
 
