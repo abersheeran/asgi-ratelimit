@@ -6,6 +6,19 @@ from aredis.pipeline import StrictPipeline, WatchError
 from ..rule import Rule, RULENAMES
 from . import BaseBackend
 
+DECREASE_SCRIPT = """
+for i, key in ipairs(KEYS) do
+    local value = tonumber(redis.call('GET', key))
+    if not value or value < 1 then
+        return false
+    end
+end
+for i, key in ipairs(KEYS) do
+    redis.call('DECR', key)
+end
+return true
+"""
+
 
 class RedisBackend(BaseBackend):
     def __init__(
@@ -16,6 +29,7 @@ class RedisBackend(BaseBackend):
         password: str = None,
     ) -> None:
         self._redis = StrictRedis(host=host, port=port, db=db, password=password)
+        self.decrease_function = self._redis.register_script(DECREASE_SCRIPT)
 
     async def increase_limit(self, path: str, user: str, rule: Rule) -> bool:
         """
@@ -55,24 +69,6 @@ class RedisBackend(BaseBackend):
         """
         Return True means successful decrease.
         """
-        async with await self._redis.pipeline() as pipe:  # type: StrictPipeline
-            for _ in range(3):
-                try:
-                    await pipe.watch(*[f"{path}:{user}:{name}" for name in RULENAMES])
-
-                    pipe.multi()
-                    [await pipe.get(f"{path}:{user}:{name}") for name in RULENAMES]
-                    result = await pipe.execute()
-
-                    for i in filter(lambda x: x is not None, result):
-                        if int(i) < 1:
-                            return False
-
-                    pipe.multi()
-                    [await pipe.decr(f"{path}:{user}:{name}") for name in RULENAMES]
-                    await pipe.execute()
-
-                    return True
-                except WatchError:
-                    continue
-            return False
+        return await self.decrease_function.execute(
+            keys=[f"{path}:{user}:{name}" for name in RULENAMES]
+        )
