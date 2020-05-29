@@ -70,5 +70,9 @@ class RedisBackend(BaseBackend):
         Return True means successful decrease.
         """
         return await self.decrease_function.execute(
-            keys=[f"{path}:{user}:{name}" for name in RULENAMES]
+            keys=[
+                f"{path}:{user}:{name}"
+                for name in RULENAMES
+                if getattr(rule, name) is not None
+            ]
         )
