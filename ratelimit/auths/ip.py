@@ -15,9 +15,7 @@ async def client_ip(scope: Scope) -> Tuple[str, str]:
             real_ip = ip
 
     for name, value in scope["headers"]:  # type: bytes, bytes
-        if name == b"x-forwarded-for":
-            ip = value.decode("utf8").split(",")[0].strip()
-        elif name == b"x-real-ip":
+        if name == b"x-real-ip":
             ip = value.decode("utf8")
         else:  # no ip to set
             continue

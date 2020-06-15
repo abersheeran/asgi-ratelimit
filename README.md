@@ -56,10 +56,20 @@ app.add_middleware(
 
 ### Built-in auth functions
 
-Client IP
+#### Client IP
 
 ```python
 from ratelimit.auths.ip import client_ip
 ```
 
-Obtain user IP through `scope["client"]` or `X-Forwarded-For` / `X-Real-IP`.
+Obtain user IP through `scope["client"]` or `X-Real-IP`.
+
+#### Json Web Token
+
+```python
+from ratelimit.auths.jwt import create_jwt_auth
+
+jwt_auth = create_jwt_auth("KEY", "HS256")
+```
+
+Get `user` and `group` from JWT that in `Authorization` header.

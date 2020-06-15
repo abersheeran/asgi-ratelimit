@@ -54,11 +54,11 @@ class BaseBackend(ABC):
 
     @abstractmethod
     async def decrease_limit(self, path: str, user: str, rule: Rule) -> bool:
-        pass
+        raise NotImplementedError()
 
     @abstractmethod
     async def increase_limit(self, path: str, user: str, rule: Rule) -> bool:
-        pass
+        raise NotImplementedError()
 
     async def allow_request(self, path: str, user: str, rule: Rule):
         updated = await self.increase_limit(path, user, rule)
