@@ -41,6 +41,17 @@ rate_limit = RateLimitMiddleware(
         "/minute_limit": [Rule(minute=1), Rule(group="admin")],
     },
 )
+
+# Or in starlette/fastapi/index.py
+app.add_middleware(
+    RateLimitMiddleware,
+    authenticate=AUTH_FUNCTION,
+    backend=RedisBackend(),
+    config={
+        "/second_limit": [Rule(second=1), Rule(group="admin")],
+        "/minute_limit": [Rule(minute=1), Rule(group="admin")],
+    },
+)
 ```
 
 ### Built-in auth functions
