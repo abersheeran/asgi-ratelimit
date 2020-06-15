@@ -1,6 +1,6 @@
 # ASGI RateLimit
 
-Limit user access frequency to specified URL. Base on ASGI.
+Limit user access frequency. Base on ASGI.
 
 ## Install
 
