@@ -5,6 +5,7 @@ import pytest
 from aredis import StrictRedis
 
 from ratelimit import RateLimitMiddleware, Rule
+from ratelimit.auths import EmptyInformation
 from ratelimit.backends.redis import RedisBackend
 
 
@@ -29,8 +30,9 @@ async def auth_func(scope):
             user = value.decode("utf8")
         if name == b"group":
             group = value.decode("utf8")
-    user = user or "no-user"
-    group = group or "no-group"
+    if user is None:
+        raise EmptyInformation(scope)
+    group = group or "default"
     return user, group
 
 

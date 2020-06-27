@@ -12,6 +12,7 @@ except ImportError:
     RSAPrivateKey = TypeVar("RSAPrivateKey")
 
 from ..types import Scope
+from . import EmptyInformation
 
 
 def create_jwt_auth(
@@ -38,7 +39,7 @@ def create_jwt_auth(
             authorization = None
 
         if not authorization:
-            return "no-jwt-client", "dont-found-jwt"
+            raise EmptyInformation(scope)
 
         token_type, json_web_token = authorization.split(" ")
 

@@ -2,6 +2,7 @@ from typing import Tuple
 from ipaddress import ip_address
 
 from ..types import Scope
+from . import EmptyInformation
 
 
 async def client_ip(scope: Scope) -> Tuple[str, str]:
@@ -17,11 +18,10 @@ async def client_ip(scope: Scope) -> Tuple[str, str]:
     for name, value in scope["headers"]:  # type: bytes, bytes
         if name == b"x-real-ip":
             ip = value.decode("utf8")
-        else:  # no ip to set
-            continue
+
         if not real_ip and ip_address(ip).is_global:
             real_ip = ip
 
     if not real_ip:
-        return "no-ip-client", "dont-found-ip"
+        raise EmptyInformation(scope)
     return real_ip, "default"

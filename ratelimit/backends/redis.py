@@ -62,7 +62,7 @@ class RedisBackend(BaseBackend):
                     )
                 await pipe.execute()
                 return True
-            except WatchError:
+            except WatchError:  # pragma: no cover
                 return False
 
     async def decrease_limit(self, path: str, user: str, rule: Rule) -> bool:

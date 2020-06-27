@@ -1,13 +1,13 @@
 import pytest
 import jwt
 
+from ratelimit.auths import EmptyInformation
 from ratelimit.auths.jwt import create_jwt_auth
 
 
 @pytest.mark.parametrize(
     "scope, user, group",
     [
-        ({"headers": ()}, "no-jwt-client", "dont-found-jwt"),
         (
             {
                 "headers": (
@@ -46,3 +46,12 @@ async def test_jwt_auth(scope, user, group):
         user,
         group,
     )
+
+
+@pytest.mark.parametrize(
+    "scope", [{"headers": ()}],
+)
+@pytest.mark.asyncio
+async def test_error(scope):
+    with pytest.raises(EmptyInformation):
+        await create_jwt_auth("test-key", ["HS256", "HS512"])(scope)

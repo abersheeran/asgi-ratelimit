@@ -26,7 +26,7 @@ class RateLimitMiddleware:
         }
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
-        if scope["type"] != "http":
+        if scope["type"] != "http":  # pragma: no cover
             return await self.app(scope, receive, send)
 
         url_path = scope["path"]

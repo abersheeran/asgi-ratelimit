@@ -2,6 +2,8 @@
 
 Limit user access frequency. Base on ASGI.
 
+100% coverage. High performance. Customizable.
+
 ## Install
 
 ```
@@ -20,6 +22,7 @@ The following example will limit users under the `"default"` group to access `/s
 from typing import Tuple
 
 from ratelimit import RateLimitMiddleware, Rule
+from ratelimit.auths import EmptyInformation
 from ratelimit.backends.redis import RedisBackend
 
 
@@ -27,6 +30,7 @@ async def AUTH_FUNCTION(scope) -> Tuple[str, str]:
     """
     Resolve the user's unique identifier and the user's group from ASGI SCOPE.
 
+    If there is no user information, it should raise `EmptyInformation`.
     If there is no group information, it should return "default".
     """
     return USER_UNIQUE_ID, GROUP_NAME
@@ -37,8 +41,8 @@ rate_limit = RateLimitMiddleware(
     AUTH_FUNCTION,
     RedisBackend(),
     {
-        "/second_limit": [Rule(second=1), Rule(group="admin")],
-        "/minute_limit": [Rule(minute=1), Rule(group="admin")],
+        r"^/second_limit": [Rule(second=1), Rule(group="admin")],
+        r"^/minute_limit": [Rule(minute=1), Rule(group="admin")],
     },
 )
 
@@ -48,8 +52,8 @@ app.add_middleware(
     authenticate=AUTH_FUNCTION,
     backend=RedisBackend(),
     config={
-        "/second_limit": [Rule(second=1), Rule(group="admin")],
-        "/minute_limit": [Rule(minute=1), Rule(group="admin")],
+        r"^/second_limit": [Rule(second=1), Rule(group="admin")],
+        r"^/minute_limit": [Rule(minute=1), Rule(group="admin")],
     },
 )
 ```
@@ -63,6 +67,16 @@ from ratelimit.auths.ip import client_ip
 ```
 
 Obtain user IP through `scope["client"]` or `X-Real-IP`.
+
+#### Starlette Session
+
+```python
+from ratelimit.auths.session import from_session
+```
+
+Get `user` and `group` from `scope["session"]`.
+
+If key `group` not in session, will return `default`. If key `user` not in session, will raise a `KeyError`.
 
 #### Json Web Token
 
