@@ -82,7 +82,7 @@ from ratelimit.auths.session import from_session
 
 Get `user` and `group` from `scope["session"]`.
 
-If key `group` not in session, will return `default`. If key `user` not in session, will raise a `KeyError`.
+If key `group` not in session, will return `default`. If key `user` not in session, will raise a `EmptyInformation`.
 
 #### Json Web Token
 
