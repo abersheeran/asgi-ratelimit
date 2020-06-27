@@ -12,6 +12,12 @@ pip install asgi-ratelimit
 
 # Use redis
 pip install asgi-ratelimit[redis]
+
+# Use jwt
+pip install asgi-ratelimit[jwt]
+
+# Install all
+pip install asgi-ratelimit[full]
 ```
 
 ## Usage
