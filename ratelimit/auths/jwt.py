@@ -1,4 +1,4 @@
-from typing import Callable, Awaitable, Tuple, List, Any, Union, TypeVar
+from typing import Callable, Awaitable, Tuple, List, Union, TypeVar
 
 import jwt
 
@@ -7,7 +7,7 @@ try:
         RSAPrivateKey,
         RSAPublicKey,
     )
-except ImportError:
+except ImportError:  # pragma: no cover
     RSAPublicKey = TypeVar("RSAPublicKey")
     RSAPrivateKey = TypeVar("RSAPrivateKey")
 
