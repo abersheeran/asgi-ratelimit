@@ -12,5 +12,7 @@ class Rule:
     day: Optional[int] = None
     month: Optional[int] = None
 
+    block_time: Optional[int] = None
+
 
 RULENAMES: Tuple[str] = ("second", "minute", "hour", "day", "month")

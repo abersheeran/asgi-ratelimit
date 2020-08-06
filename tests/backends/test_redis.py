@@ -15,7 +15,7 @@ async def hello_world(scope, receive, send):
         {
             "type": "http.response.start",
             "status": 200,
-            "headers": [[b"content-type", b"text/plain"],],
+            "headers": [[b"content-type", b"text/plain"]],
         }
     )
     await send({"type": "http.response.body", "body": b"Hello world!"})
@@ -44,8 +44,9 @@ async def test_redis():
         auth_func,
         RedisBackend(),
         {
-            "/second_limit": [Rule(second=1), Rule(group="admin")],
-            "/minute.*": [Rule(minute=1), Rule(group="admin")],
+            r"/second_limit": [Rule(second=1), Rule(group="admin")],
+            r"/minute.*": [Rule(minute=1), Rule(group="admin")],
+            r"/block": [Rule(second=1, block_time=5)],
         },
     )
     async with httpx.AsyncClient(
@@ -88,5 +89,34 @@ async def test_redis():
 
         response = await client.get(
             "/minute_limit", headers={"user": "admin-user", "group": "admin"}
+        )
+        assert response.status_code == 200
+
+        response = await client.get(
+            "/block", headers={"user": "user", "group": "default"}
+        )
+        assert response.status_code == 200
+
+        response = await client.get(
+            "/block", headers={"user": "user", "group": "default"}
+        )
+        assert response.status_code == 429
+
+        await asyncio.sleep(1)
+
+        response = await client.get(
+            "/block", headers={"user": "user", "group": "default"}
+        )
+        assert response.status_code == 429
+
+        response = await client.get(
+            "/block", headers={"user": "user", "group": "default"}
+        )
+        assert response.status_code == 429
+
+        await asyncio.sleep(4)
+
+        response = await client.get(
+            "/block", headers={"user": "user", "group": "default"}
         )
         assert response.status_code == 200
