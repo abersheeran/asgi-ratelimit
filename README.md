@@ -64,6 +64,12 @@ app.add_middleware(
 )
 ```
 
+### Block time
+
+When the user's request frequency triggers the upper limit, all requests in the following period of time will be returned with a `429` status code.
+
+Example: `Rule(second=5, block_time=60)`, this rule will limit the user to a maximum of 5 visits per second. Once this limit is exceeded, all requests within the next 60 seconds will return `429`.
+
 ### Built-in auth functions
 
 #### Client IP
