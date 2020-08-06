@@ -2,7 +2,7 @@
 
 Limit user access frequency. Base on ASGI.
 
-100% coverage. High performance. Customizable.
+100% coverage. High performance. Support regular matching. Customizable.
 
 ## Install
 
