@@ -77,8 +77,8 @@ class RedisBackend(BaseBackend):
             ]
         )
 
-    async def set_block_time(self, path: str, user: str, block_time: int) -> None:
-        await self._redis.set(f"blocking:{path}:{user}", True, block_time)
+    async def set_block_time(self, user: str, block_time: int) -> None:
+        await self._redis.set(f"blocking:{user}", True, block_time)
 
-    async def is_blocking(self, path: str, user: str) -> bool:
-        return bool(await self._redis.get(f"blocking:{path}:{user}"))
+    async def is_blocking(self, user: str) -> bool:
+        return bool(await self._redis.get(f"blocking:{user}"))
