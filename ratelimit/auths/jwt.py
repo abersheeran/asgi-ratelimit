@@ -49,6 +49,9 @@ def create_jwt_auth(
 
         data = jwt.decode(json_web_token, key, algorithms=algorithms)
 
-        return data["user"], data["group"]
+        try:
+            return data["user"], data.get("group", "default")
+        except KeyError:
+            raise EmptyInformation(scope)
 
     return jwt_auth
