@@ -70,6 +70,19 @@ When the user's request frequency triggers the upper limit, all requests in the 
 
 Example: `Rule(second=5, block_time=60)`, this rule will limit the user to a maximum of 5 visits per second. Once this limit is exceeded, all requests within the next 60 seconds will return `429`.
 
+### Custom block handler
+
+Just specify `on_blocked` and you can customize the asgi application that is called when blocked.
+
+```python
+async def yourself_429(scope: Scope, receive: Receive, send: Send) -> None:
+    await send({"type": "http.response.start", "status": 429})
+    await send({"type": "http.response.body", "body": b"429 page", "more_body": False})
+
+
+RateLimitMiddleware(..., on_blocked=yourself_429)
+```
+
 ### Built-in auth functions
 
 #### Client IP
