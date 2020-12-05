@@ -6,6 +6,11 @@ from .backends import BaseBackend
 from .rule import Rule, RULENAMES
 
 
+async def default_429(scope: Scope, receive: Receive, send: Send) -> None:
+    await send({"type": "http.response.start", "status": 429})
+    await send({"type": "http.response.body", "body": b"", "more_body": False})
+
+
 class RateLimitMiddleware:
     """
     rate limit middleware
@@ -17,6 +22,8 @@ class RateLimitMiddleware:
         authenticate: Callable[[Scope], Awaitable[Tuple[str, str]]],
         backend: BaseBackend,
         config: Dict[str, Sequence[Rule]],
+        *,
+        on_blocked: ASGIApp = default_429,
     ) -> None:
         self.app = app
         self.authenticate = authenticate
@@ -24,6 +31,7 @@ class RateLimitMiddleware:
         self.config: Dict[re.Pattern, Sequence[Rule]] = {
             re.compile(path): value for path, value in config.items()
         }
+        self.on_blocked = on_blocked
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         if scope["type"] != "http":  # pragma: no cover
@@ -51,5 +59,4 @@ class RateLimitMiddleware:
         if not has_rule or await self.backend.allow_request(url_path, user, rule):
             return await self.app(scope, receive, send)
 
-        await send({"type": "http.response.start", "status": 429})
-        await send({"type": "http.response.body", "body": b"", "more_body": False})
+        return await self.on_blocked(scope, receive, send)
