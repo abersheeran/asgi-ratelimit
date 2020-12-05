@@ -19,7 +19,6 @@ async def hello_world(scope, receive, send):
         }
     )
     await send({"type": "http.response.body", "body": b"Hello world!"})
-    await send({"type": "http.response.disconnect"})
 
 
 async def auth_func(scope):
