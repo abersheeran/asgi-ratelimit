@@ -39,6 +39,9 @@ async def AUTH_FUNCTION(scope) -> Tuple[str, str]:
     If there is no user information, it should raise `EmptyInformation`.
     If there is no group information, it should return "default".
     """
+    # FIXME
+    # You must write the logic of this function yourself, 
+    # or use the function in the following document directly.
     return USER_UNIQUE_ID, GROUP_NAME
 
 
