@@ -22,7 +22,7 @@ pip install asgi-ratelimit[full]
 
 ## Usage
 
-The following example will limit users under the `"default"` group to access `/second_limit` at most once per second and `/minute_limit` at most once per minute. And the users in the `"admin"` group have no restrictions.
+The following example will limit users under the `"default"` group to access `/towns` at most once per second and `/forests` at most once per minute. And the users in the `"admin"` group have no restrictions.
 
 ```python
 from typing import Tuple
@@ -32,7 +32,32 @@ from ratelimit.auths import EmptyInformation
 from ratelimit.backends.redis import RedisBackend
 
 
-async def AUTH_FUNCTION(scope) -> Tuple[str, str]:
+rate_limit = RateLimitMiddleware(
+    ASGI_APP,
+    AUTH_FUNCTION,
+    RedisBackend(),
+    {
+        r"^/towns": [Rule(second=1, group="default"), Rule(group="admin")],
+        r"^/forests": [Rule(minute=1, group="default"), Rule(group="admin")],
+    },
+)
+
+# Or if using Starlette, FastApi, or index.py framework
+app.add_middleware(
+    RateLimitMiddleware,
+    authenticate=AUTH_FUNCTION,
+    backend=RedisBackend(),
+    config={
+        r"^/towns": [Rule(second=1, group="default"), Rule(group="admin")],
+        r"^/forests": [Rule(minute=1, group="default"), Rule(group="admin")],
+    },
+)
+```
+
+Next, provide a custom authenticate function, or use one of the [existing auth methods](#built-in-auth-functions).
+
+```python
+async def AUTH_FUNCTION(scope: Scope) -> Tuple[str, str]:
     """
     Resolve the user's unique identifier and the user's group from ASGI SCOPE.
 
@@ -44,28 +69,62 @@ async def AUTH_FUNCTION(scope) -> Tuple[str, str]:
     # or use the function in the following document directly.
     return USER_UNIQUE_ID, GROUP_NAME
 
-
 rate_limit = RateLimitMiddleware(
     ASGI_APP,
     AUTH_FUNCTION,
-    RedisBackend(),
-    {
-        r"^/second_limit": [Rule(second=1), Rule(group="admin")],
-        r"^/minute_limit": [Rule(minute=1), Rule(group="admin")],
-    },
-)
-
-# Or in starlette/fastapi/index.py
-app.add_middleware(
-    RateLimitMiddleware,
-    authenticate=AUTH_FUNCTION,
-    backend=RedisBackend(),
-    config={
-        r"^/second_limit": [Rule(second=1), Rule(group="admin")],
-        r"^/minute_limit": [Rule(minute=1), Rule(group="admin")],
-    },
+    ...
 )
 ```
+
+The `Rule` type takes a time unit (e.g. `"second"`) and/or a `"group"`, as a param. If the `"group"` param is not specified then the `"authenticate"` method needs to return the "default group".
+
+Example:
+```python
+    ...
+    config={
+        r"^/towns": [Rule(second=1), Rule(second=10, group="admin")],
+    }
+    ...
+    
+async def AUTH_FUNCTION(scope: Scope) -> Tuple[str, str]:
+...
+    # no group information about this user
+    if user not in admins_group:
+        return user_unique_id, 'default'
+        
+    return user_unique_id, user_group
+...
+```
+
+### Customizable rules
+
+It is possible to mix the rules to obtain higher level of control.
+
+The below example will allow up to 10 requests per second and no more than 200 requests per minute, for everyone, for the same API endpoint.
+
+```python
+    ...
+    config={
+        r"^/towns": [Rule(minute=200), Rule(second=10)],
+    }
+    ...
+```
+
+Remember: define the Rule's with time units in decreasing order, so that is: `"month"` -> `"day"` -> `"hour"` -> `"minute"` -> `"second"`
+
+Example for a "admin" group with higher limits.
+```python
+    ...
+    config={
+        r"^/towns": [
+            Rule(day=400), Rule(minute=200), Rule(second=10),
+            Rule(minute=500, group="admin"), Rule(second=25, group="admin"),
+        ],
+    }
+    ...
+```
+
+
 
 ### Block time
 
@@ -95,6 +154,8 @@ from ratelimit.auths.ip import client_ip
 ```
 
 Obtain user IP through `scope["client"]` or `X-Real-IP`.
+
+Note: this auth method will not work if your IP address (such as 127.0.0.1 etc) is not allocated for public networks.
 
 #### Starlette Session
 
