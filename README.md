@@ -65,7 +65,7 @@ async def AUTH_FUNCTION(scope: Scope) -> Tuple[str, str]:
     If there is no group information, it should return "default".
     """
     # FIXME
-    # You must write the logic of this function yourself, 
+    # You must write the logic of this function yourself,
     # or use the function in the following document directly.
     return USER_UNIQUE_ID, GROUP_NAME
 
@@ -85,15 +85,15 @@ Example:
         r"^/towns": [Rule(second=1), Rule(second=10, group="admin")],
     }
     ...
-    
+
+
 async def AUTH_FUNCTION(scope: Scope) -> Tuple[str, str]:
-...
+    ...
     # no group information about this user
     if user not in admins_group:
         return user_unique_id, 'default'
-        
+
     return user_unique_id, user_group
-...
 ```
 
 ### Customizable rules
@@ -105,26 +105,23 @@ The below example will allow up to 10 requests per second and no more than 200 r
 ```python
     ...
     config={
-        r"^/towns": [Rule(minute=200), Rule(second=10)],
+        r"^/towns": [Rule(minute=200, second=10)],
     }
     ...
 ```
 
-Remember: define the Rule's with time units in decreasing order, so that is: `"month"` -> `"day"` -> `"hour"` -> `"minute"` -> `"second"`
-
 Example for a "admin" group with higher limits.
+
 ```python
     ...
     config={
         r"^/towns": [
-            Rule(day=400), Rule(minute=200), Rule(second=10),
-            Rule(minute=500, group="admin"), Rule(second=25, group="admin"),
+            Rule(day=400, minute=200, second=10),
+            Rule(minute=500, second=25, group="admin"),
         ],
     }
     ...
 ```
-
-
 
 ### Block time
 
