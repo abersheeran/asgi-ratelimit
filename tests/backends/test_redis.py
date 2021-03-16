@@ -46,6 +46,7 @@ async def test_redis():
             r"/second_limit": [Rule(second=1), Rule(group="admin")],
             r"/minute.*": [Rule(minute=1), Rule(group="admin")],
             r"/block": [Rule(second=1, block_time=5)],
+            r"/multiple": [Rule(second=1, hour=2)]
         },
     )
     async with httpx.AsyncClient(
@@ -119,3 +120,24 @@ async def test_redis():
             "/block", headers={"user": "user", "group": "default"}
         )
         assert response.status_code == 200
+
+        # multiple 1/s and 2/hour
+        # 200 - no wait - 429 - wait 1 - 200 - wait 1 - 429
+        response = await client.get(
+            "/multiple", headers={"user": "user", "group": "default"}
+        )
+        assert response.status_code == 200
+        response = await client.get(
+            "/multiple", headers={"user": "user", "group": "default"}
+        )
+        assert response.status_code == 429
+        await asyncio.sleep(1)
+        response = await client.get(
+            "/multiple", headers={"user": "user", "group": "default"}
+        )
+        assert response.status_code == 200
+        await asyncio.sleep(1)
+        response = await client.get(
+            "/multiple", headers={"user": "user", "group": "default"}
+        )
+        assert response.status_code == 429
