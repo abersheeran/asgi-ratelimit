@@ -69,13 +69,15 @@ class RedisBackend(BaseBackend):
         """
         Return True means successful decrease.
         """
-        return await self.decrease_function.execute(
+        decreased = await self.decrease_function.execute(
             keys=[
                 f"{path}:{user}:{name}"
                 for name in RULENAMES
                 if getattr(rule, name) is not None
             ]
         )
+        print(f"decreased: {decreased}")
+        return decreased
 
     async def set_block_time(self, user: str, block_time: int) -> None:
         await self._redis.set(f"blocking:{user}", True, block_time)
