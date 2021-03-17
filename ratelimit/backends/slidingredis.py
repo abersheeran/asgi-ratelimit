@@ -1,10 +1,15 @@
 import json
+import logging
 import time
 
 from aredis import StrictRedis
 
 from ..rule import Rule
 from . import BaseBackend
+
+logger = logging.getLogger(__name__)
+logging.basicConfig()
+logger.setLevel(logging.DEBUG)
 
 SLIDING_WINDOW_SCRIPT = """
 -- Set variables from arguments
@@ -50,9 +55,9 @@ class SlidingRedisBackend(BaseBackend):
         args = [epoch, json.dumps(ruleset)]
         quoted_args = [f"'{a}'" for a in args]
         cli = f"redis-cli --ldb --eval /tmp/script.lua {' '.join(keys)} , {' '.join(quoted_args)}"
-        print(cli)
+        logger.debug(cli)
         r = await self.sliding_function.execute(keys=keys, args=args)
-        print(f"{epoch} {r} : {all(r)}")
+        logger.debug(f"{epoch} {r} : {all(r)}")
         return all(r)
 
     async def decrease_limit(self, path: str, user: str, rule: Rule) -> bool:
