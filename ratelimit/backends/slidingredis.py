@@ -81,7 +81,7 @@ class SlidingRedisBackend(BaseBackend):
         args = [epoch, json.dumps(ruleset)]
         quoted_args = [f"'{a}'" for a in args]
         cli = f"redis-cli --ldb --eval /tmp/script.lua {' '.join(keys)} , {' '.join(quoted_args)}"
-        logger.debug(cli)
+        # logger.debug(cli)
         r = await self.sliding_function.execute(keys=keys, args=args)
         logger.debug(f"{epoch} {r} : {all(r)}")
         return all(r)
