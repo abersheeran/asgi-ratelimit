@@ -7,18 +7,25 @@ from ..rule import Rule
 from . import BaseBackend
 
 SLIDING_WINDOW_SCRIPT = """
+-- Set variables from arguments
 local now = tonumber(ARGV[1])
 local ruleset = cjson.decode(ARGV[2])
+-- ruleset looks like this:
+-- {key: [limit, window_size], ...}
 local scores = {}
 for i, pgname in ipairs(KEYS) do
+    -- we remove keys older than now - window_size
     local clearBefore = now - ruleset[pgname][2]
     redis.call('ZREMRANGEBYSCORE', pgname, 0, clearBefore)
+    -- we get the count
     local amount = redis.call('ZCARD', pgname)
+    -- we add to sorted set if allowed ie the amount < limit
     if amount < ruleset[pgname][1] then
         redis.call('ZADD', pgname, now, now)
     end
+    -- cleanup, this expires the whole set in window_size secs
     redis.call('EXPIRE', pgname, ruleset[pgname][2])
-
+    -- calculate the remaining amount of requests. If >= 0 then request for that window is allowed
     scores[i] = ruleset[pgname][1] - amount
 end
 return scores
