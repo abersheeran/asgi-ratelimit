@@ -1,3 +1,4 @@
+import json
 import time
 
 from aredis import StrictRedis
@@ -7,57 +8,56 @@ from ..rule import Rule, RULENAMES
 from . import BaseBackend
 
 SLIDING_WINDOW_SCRIPT = """
-local pgname = KEYS[1]
 local now = tonumber(ARGV[1])
-local window = tonumber(ARGV[2])
-local limit = tonumber(ARGV[3])
-local clearBefore = now - window
+local ruleset = cjson.decode(ARGV[2])
+local scores = {}
+for i, pgname in ipairs(KEYS) do
+    local clearBefore = now - ruleset[pgname][2]
+    redis.call('ZREMRANGEBYSCORE', pgname, 0, clearBefore)
+    local amount = redis.call('ZCARD', pgname)
+    if amount < ruleset[pgname][1] then
+        redis.call('ZADD', pgname, now, now)
+    end
+    redis.call('EXPIRE', pgname, ruleset[pgname][2])
 
-redis.call('ZREMRANGEBYSCORE', pgname, 0, clearBefore)
-local amount = redis.call('ZCARD', pgname)
-if amount < limit then
-    redis.call('ZADD', pgname, now, now)
+    scores[i] = ruleset[pgname][1] - amount
 end
-redis.call('EXPIRE', pgname, window)
-
-return limit - amount
+return scores
 """
 
 WINDOW_SIZE = {
     "second": 1,
     "minute": 60,
-    "hour": 60*60,
-    "day": 24*60*60,
-    "month": 31*24*60*60
+    "hour": 60 * 60,
+    "day": 24 * 60 * 60,
+    "month": 31 * 24 * 60 * 60,
 }
 
 
 class RedisBackend(BaseBackend):
     def __init__(
-            self,
-            host: str = "localhost",
-            port: int = 6379,
-            db: int = 0,
-            password: str = None,
+        self,
+        host: str = "localhost",
+        port: int = 6379,
+        db: int = 0,
+        password: str = None,
     ) -> None:
         self._redis = StrictRedis(host=host, port=port, db=db, password=password)
         self.sliding_function = self._redis.register_script(SLIDING_WINDOW_SCRIPT)
 
     async def get_limits(self, path: str, user: str, rule: Rule) -> bool:
         epoch = time.time()
-        scores = []
-        for name in RULENAMES:
-            limit = getattr(rule, name)
-            if limit is not None:
-                key = f"{path}:{user}:{name}"
-                print(f"limit: {limit} key: {key}")
-                r = await self.sliding_function.execute(
-                    keys=[key],
-                    args=[epoch, WINDOW_SIZE[name], limit]
-                )
-                scores.append(r)
-        print(f"{epoch} {scores} : {all(scores)}")
-        return all(scores)
+        ruleset = rule.ruleset(path, user, WINDOW_SIZE)
+        keys = list(ruleset.keys())
+        print(keys)
+        args = [(epoch), json.dumps(ruleset)]
+        argss = [f"'{a}'" for a in args]
+        print(1)
+        cli = f"redis-cli --ldb --eval /tmp/script.lua {' '.join(keys)} , {' '.join(argss)}"
+        print(cli)
+        r = await self.sliding_function.execute(keys=keys, args=args)
+        print(f"{epoch} {r} : {all(r)}")
+        return all(r)
 
     async def decrease_limit(self, path: str, user: str, rule: Rule) -> bool:
         raise NotImplementedError()

@@ -46,51 +46,51 @@ async def test_redis():
             r"/second_limit": [Rule(second=1), Rule(group="admin")],
             r"/minute.*": [Rule(minute=1), Rule(group="admin")],
             r"/block": [Rule(second=1, block_time=5)],
-            r"/multiple": [Rule(second=1, minute=2)]
+            r"/multiple": [Rule(second=1, minute=3)],
         },
     )
     async with httpx.AsyncClient(
         app=rate_limit, base_url="http://testserver"
     ) as client:  # type: httpx.AsyncClient
-        # response = await client.get("/")
-        # assert response.status_code == 200
-        #
-        # response = await client.get(
-        #     "/second_limit", headers={"user": "user", "group": "default"}
-        # )
-        # assert response.status_code == 200
-        #
-        # response = await client.get(
-        #     "/second_limit", headers={"user": "user", "group": "default"}
-        # )
-        # assert response.status_code == 429
-        #
-        # response = await client.get(
-        #     "/second_limit", headers={"user": "admin-user", "group": "admin"}
-        # )
-        # assert response.status_code == 200
-        #
-        # await asyncio.sleep(1)
-        #
-        # response = await client.get(
-        #     "/second_limit", headers={"user": "user", "group": "default"}
-        # )
-        # assert response.status_code == 200
-        #
-        # response = await client.get(
-        #     "/minute_limit", headers={"user": "user", "group": "default"}
-        # )
-        # assert response.status_code == 200
-        #
-        # response = await client.get(
-        #     "/minute_limit", headers={"user": "user", "group": "default"}
-        # )
-        # assert response.status_code == 429
-        #
-        # response = await client.get(
-        #     "/minute_limit", headers={"user": "admin-user", "group": "admin"}
-        # )
-        # assert response.status_code == 200
+        response = await client.get("/")
+        assert response.status_code == 200
+
+        response = await client.get(
+            "/second_limit", headers={"user": "user", "group": "default"}
+        )
+        assert response.status_code == 200
+
+        response = await client.get(
+            "/second_limit", headers={"user": "user", "group": "default"}
+        )
+        assert response.status_code == 429
+
+        response = await client.get(
+            "/second_limit", headers={"user": "admin-user", "group": "admin"}
+        )
+        assert response.status_code == 200
+
+        await asyncio.sleep(1)
+
+        response = await client.get(
+            "/second_limit", headers={"user": "user", "group": "default"}
+        )
+        assert response.status_code == 200
+
+        response = await client.get(
+            "/minute_limit", headers={"user": "user", "group": "default"}
+        )
+        assert response.status_code == 200
+
+        response = await client.get(
+            "/minute_limit", headers={"user": "user", "group": "default"}
+        )
+        assert response.status_code == 429
+
+        response = await client.get(
+            "/minute_limit", headers={"user": "admin-user", "group": "admin"}
+        )
+        assert response.status_code == 200
 
         # response = await client.get(
         #     "/block", headers={"user": "user", "group": "default"}
@@ -121,22 +121,30 @@ async def test_redis():
         # )
         # assert response.status_code == 200
 
-        # multiple 1/s and 2/hour
-        # 200 - no wait - 429 - wait 1 - 200 - wait 1 - 429
+        # multiple 1/s and 3/min
+        # 1 3
         response = await client.get(
             "/multiple", headers={"user": "user", "group": "default"}
         )
         assert response.status_code == 200
+        # 1-1 3-1 = 0 2
         response = await client.get(
             "/multiple", headers={"user": "user", "group": "default"}
         )
         assert response.status_code == 429
         await asyncio.sleep(1)
+        # 0+1 2-1 = 1 1
         response = await client.get(
             "/multiple", headers={"user": "user", "group": "default"}
         )
         assert response.status_code == 200
-        await asyncio.sleep(1)
+        # 1-1 1-1 = 0 0
+        response = await client.get(
+            "/multiple", headers={"user": "user", "group": "default"}
+        )
+        assert response.status_code == 429
+        await asyncio.sleep(2)
+        # 0+1 0+0 = 1 0
         response = await client.get(
             "/multiple", headers={"user": "user", "group": "default"}
         )

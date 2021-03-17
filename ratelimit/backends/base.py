@@ -79,7 +79,6 @@ class BaseBackend(ABC):
         if await self.is_blocking(user):
             return False
 
-
         allow = await self.get_limits(path, user, rule)
         # updated = await self.increase_limit(path, user, rule)
         # allow = updated or await self.decrease_limit(path, user, rule)
