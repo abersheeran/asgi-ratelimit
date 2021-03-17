@@ -6,6 +6,7 @@ from aredis import StrictRedis
 
 from ratelimit import RateLimitMiddleware, Rule
 from ratelimit.auths import EmptyInformation
+from ratelimit.backends.redis import RedisBackend
 from ratelimit.backends.slidingredis import SlidingRedisBackend
 
 
@@ -36,12 +37,13 @@ async def auth_func(scope):
 
 
 @pytest.mark.asyncio
-async def test_redis():
+@pytest.mark.parametrize("redisbackend", [SlidingRedisBackend, RedisBackend])
+async def test_redis(redisbackend):
     await StrictRedis().flushdb()
     rate_limit = RateLimitMiddleware(
         hello_world,
         auth_func,
-        SlidingRedisBackend(),
+        redisbackend(),
         {
             r"/second_limit": [Rule(second=1), Rule(group="admin")],
             r"/minute.*": [Rule(minute=1), Rule(group="admin")],
@@ -92,34 +94,34 @@ async def test_redis():
         )
         assert response.status_code == 200
 
-        # response = await client.get(
-        #     "/block", headers={"user": "user", "group": "default"}
-        # )
-        # assert response.status_code == 200
-        #
-        # response = await client.get(
-        #     "/block", headers={"user": "user", "group": "default"}
-        # )
-        # assert response.status_code == 429
-        #
-        # await asyncio.sleep(1)
-        #
-        # response = await client.get(
-        #     "/block", headers={"user": "user", "group": "default"}
-        # )
-        # assert response.status_code == 429
-        #
-        # response = await client.get(
-        #     "/block", headers={"user": "user", "group": "default"}
-        # )
-        # assert response.status_code == 429
-        #
-        # await asyncio.sleep(4)
-        #
-        # response = await client.get(
-        #     "/block", headers={"user": "user", "group": "default"}
-        # )
-        # assert response.status_code == 200
+        response = await client.get(
+            "/block", headers={"user": "user", "group": "default"}
+        )
+        assert response.status_code == 200
+
+        response = await client.get(
+            "/block", headers={"user": "user", "group": "default"}
+        )
+        assert response.status_code == 429
+
+        await asyncio.sleep(1)
+
+        response = await client.get(
+            "/block", headers={"user": "user", "group": "default"}
+        )
+        assert response.status_code == 429
+
+        response = await client.get(
+            "/block", headers={"user": "user", "group": "default"}
+        )
+        assert response.status_code == 429
+
+        await asyncio.sleep(4)
+
+        response = await client.get(
+            "/block", headers={"user": "user", "group": "default"}
+        )
+        assert response.status_code == 200
 
         # multiple 1/s and 3/min
         # 1 3

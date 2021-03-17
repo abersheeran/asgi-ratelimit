@@ -48,10 +48,8 @@ class SlidingRedisBackend(BaseBackend):
         epoch = time.time()
         ruleset = rule.ruleset(path, user, WINDOW_SIZE)
         keys = list(ruleset.keys())
-        print(keys)
         args = [(epoch), json.dumps(ruleset)]
         argss = [f"'{a}'" for a in args]
-        print(1)
         cli = f"redis-cli --ldb --eval /tmp/script.lua {' '.join(keys)} , {' '.join(argss)}"
         print(cli)
         r = await self.sliding_function.execute(keys=keys, args=args)
@@ -69,3 +67,14 @@ class SlidingRedisBackend(BaseBackend):
 
     async def is_blocking(self, user: str) -> bool:
         return bool(await self._redis.get(f"blocking:{user}"))
+
+    async def allow_request(self, path: str, user: str, rule: Rule) -> bool:
+        if await self.is_blocking(user):
+            return False
+
+        allow = await self.get_limits(path, user, rule)
+
+        if not allow and rule.block_time:
+            await self.set_block_time(user, rule.block_time)
+
+        return allow
