@@ -47,7 +47,7 @@ class SlidingRedisBackend(BaseBackend):
         epoch = time.time()
         ruleset = rule.ruleset(path, user)
         keys = list(ruleset.keys())
-        args = [(epoch), json.dumps(ruleset)]
+        args = [epoch, json.dumps(ruleset)]
         quoted_args = [f"'{a}'" for a in args]
         cli = f"redis-cli --ldb --eval /tmp/script.lua {' '.join(keys)} , {' '.join(quoted_args)}"
         print(cli)
