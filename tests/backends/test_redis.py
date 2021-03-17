@@ -6,7 +6,7 @@ from aredis import StrictRedis
 
 from ratelimit import RateLimitMiddleware, Rule
 from ratelimit.auths import EmptyInformation
-from ratelimit.backends.redis import RedisBackend
+from ratelimit.backends.slidingredis import SlidingRedisBackend
 
 
 async def hello_world(scope, receive, send):
@@ -41,7 +41,7 @@ async def test_redis():
     rate_limit = RateLimitMiddleware(
         hello_world,
         auth_func,
-        RedisBackend(),
+        SlidingRedisBackend(),
         {
             r"/second_limit": [Rule(second=1), Rule(group="admin")],
             r"/minute.*": [Rule(minute=1), Rule(group="admin")],

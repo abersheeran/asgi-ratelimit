@@ -2,9 +2,8 @@ import json
 import time
 
 from aredis import StrictRedis
-from aredis.pipeline import StrictPipeline, WatchError
 
-from ..rule import Rule, RULENAMES
+from ..rule import Rule
 from . import BaseBackend
 
 SLIDING_WINDOW_SCRIPT = """
@@ -34,7 +33,7 @@ WINDOW_SIZE = {
 }
 
 
-class RedisBackend(BaseBackend):
+class SlidingRedisBackend(BaseBackend):
     def __init__(
         self,
         host: str = "localhost",
