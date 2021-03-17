@@ -31,14 +31,6 @@ end
 return scores
 """
 
-WINDOW_SIZE = {
-    "second": 1,
-    "minute": 60,
-    "hour": 60 * 60,
-    "day": 24 * 60 * 60,
-    "month": 31 * 24 * 60 * 60,
-}
-
 
 class SlidingRedisBackend(BaseBackend):
     def __init__(
@@ -53,11 +45,11 @@ class SlidingRedisBackend(BaseBackend):
 
     async def get_limits(self, path: str, user: str, rule: Rule) -> bool:
         epoch = time.time()
-        ruleset = rule.ruleset(path, user, WINDOW_SIZE)
+        ruleset = rule.ruleset(path, user)
         keys = list(ruleset.keys())
         args = [(epoch), json.dumps(ruleset)]
-        argss = [f"'{a}'" for a in args]
-        cli = f"redis-cli --ldb --eval /tmp/script.lua {' '.join(keys)} , {' '.join(argss)}"
+        quoted_args = [f"'{a}'" for a in args]
+        cli = f"redis-cli --ldb --eval /tmp/script.lua {' '.join(keys)} , {' '.join(quoted_args)}"
         print(cli)
         r = await self.sliding_function.execute(keys=keys, args=args)
         print(f"{epoch} {r} : {all(r)}")
