@@ -75,6 +75,14 @@ class BaseBackend(ABC):
     async def is_blocking(self, user: str) -> bool:
         raise NotImplementedError()
 
-    @abstractmethod
     async def allow_request(self, path: str, user: str, rule: Rule) -> bool:
-        raise NotImplementedError()
+        if await self.is_blocking(user):
+            return False
+
+        updated = await self.increase_limit(path, user, rule)
+        allow = updated or await self.decrease_limit(path, user, rule)
+
+        if not allow and rule.block_time:
+            await self.set_block_time(user, rule.block_time)
+
+        return allow
