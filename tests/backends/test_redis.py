@@ -48,7 +48,6 @@ async def test_redis(redisbackend):
             r"/second_limit": [Rule(second=1), Rule(group="admin")],
             r"/minute.*": [Rule(minute=1), Rule(group="admin")],
             r"/block": [Rule(second=1, block_time=5)],
-            r"/multiple": [Rule(second=1, minute=3)],
         },
     )
     async with httpx.AsyncClient(
@@ -122,6 +121,21 @@ async def test_redis(redisbackend):
             "/block", headers={"user": "user", "group": "default"}
         )
         assert response.status_code == 200
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("redisbackend", [SlidingRedisBackend])
+async def test_multiple(redisbackend):
+    await StrictRedis().flushdb()
+    rate_limit = RateLimitMiddleware(
+        hello_world,
+        auth_func,
+        redisbackend(),
+        {r"/multiple": [Rule(second=1, minute=3)],},
+    )
+    async with httpx.AsyncClient(
+        app=rate_limit, base_url="http://testserver"
+    ) as client:  # type: httpx.AsyncClient
 
         # multiple 1/s and 3/min
         # 1 3

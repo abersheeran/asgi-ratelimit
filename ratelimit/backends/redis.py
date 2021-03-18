@@ -82,4 +82,3 @@ class RedisBackend(BaseBackend):
 
     async def is_blocking(self, user: str) -> bool:
         return bool(await self._redis.get(f"blocking:{user}"))
-
