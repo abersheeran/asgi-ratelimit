@@ -58,7 +58,7 @@ class RedisBackend(BaseBackend):
                 for name, data in incr_dict.items():
                     await pipe.set(f"{path}:{user}:{name}", data["value"], data["ttl"])
                     await pipe.set(
-                        f"{path}:{user}:{name}:last_modify", timestamp, data["ttl"],
+                        f"{path}:{user}:{name}:last_modify", timestamp, data["ttl"]
                     )
                 await pipe.execute()
                 return True

@@ -131,7 +131,7 @@ async def test_multiple(redisbackend):
         hello_world,
         auth_func,
         redisbackend(),
-        {r"/multiple": [Rule(second=1, minute=3)],},
+        {r"/multiple": [Rule(second=1, minute=3)]},
     )
     async with httpx.AsyncClient(
         app=rate_limit, base_url="http://testserver"
