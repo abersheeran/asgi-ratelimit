@@ -9,32 +9,32 @@ from ..rule import Rule
 from . import BaseBackend
 
 
-class TimeFilter(logging.Filter):
-    def filter(self, record):
-        try:
-            last = self.last
-        except AttributeError:
-            last = record.relativeCreated
-        delta = datetime.datetime.fromtimestamp(
-            record.relativeCreated / 1000.0
-        ) - datetime.datetime.fromtimestamp(last / 1000.0)
-        record.relative = "{0:.2f}".format(
-            delta.seconds + delta.microseconds / 1000000.0
-        )
-        self.last = record.relativeCreated
-        return True
-
-
-logger = logging.getLogger("ratelimit")
-logger.setLevel(logging.DEBUG)
-ch = logging.StreamHandler()
-ch.setLevel(logging.DEBUG)
-formatter = logging.Formatter(
-    fmt="+%(relative)s - %(name)s - %(levelname)s - %(message)s"
-)
-logger.addHandler(ch)
-[hndl.addFilter(TimeFilter()) for hndl in logger.handlers]
-[hndl.setFormatter(formatter) for hndl in logger.handlers]
+# class TimeFilter(logging.Filter):
+#     def filter(self, record):
+#         try:
+#             last = self.last
+#         except AttributeError:
+#             last = record.relativeCreated
+#         delta = datetime.datetime.fromtimestamp(
+#             record.relativeCreated / 1000.0
+#         ) - datetime.datetime.fromtimestamp(last / 1000.0)
+#         record.relative = "{0:.2f}".format(
+#             delta.seconds + delta.microseconds / 1000000.0
+#         )
+#         self.last = record.relativeCreated
+#         return True
+#
+#
+# logger = logging.getLogger("ratelimit")
+# logger.setLevel(logging.DEBUG)
+# ch = logging.StreamHandler()
+# ch.setLevel(logging.DEBUG)
+# formatter = logging.Formatter(
+#     fmt="+%(relative)s - %(name)s - %(levelname)s - %(message)s"
+# )
+# logger.addHandler(ch)
+# [hndl.addFilter(TimeFilter()) for hndl in logger.handlers]
+# [hndl.setFormatter(formatter) for hndl in logger.handlers]
 
 
 SLIDING_WINDOW_SCRIPT = """
@@ -79,11 +79,11 @@ class SlidingRedisBackend(BaseBackend):
         ruleset = rule.ruleset(path, user)
         keys = list(ruleset.keys())
         args = [epoch, json.dumps(ruleset)]
-        quoted_args = [f"'{a}'" for a in args]
-        cli = f"redis-cli --ldb --eval /tmp/script.lua {' '.join(keys)} , {' '.join(quoted_args)}"
+        # quoted_args = [f"'{a}'" for a in args]
+        # cli = f"redis-cli --ldb --eval /tmp/script.lua {' '.join(keys)} , {' '.join(quoted_args)}"
         # logger.debug(cli)
         r = await self.sliding_function.execute(keys=keys, args=args)
-        logger.debug(f"{epoch} {r} : {all(r)}")
+        # logger.debug(f"{epoch} {r} : {all(r)}")
         return all(r)
 
     async def decrease_limit(self, path: str, user: str, rule: Rule) -> bool:
