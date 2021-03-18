@@ -1,4 +1,6 @@
 import asyncio
+import datetime
+import logging
 
 import httpx
 import pytest
@@ -8,6 +10,34 @@ from ratelimit import RateLimitMiddleware, Rule
 from ratelimit.auths import EmptyInformation
 from ratelimit.backends.redis import RedisBackend
 from ratelimit.backends.slidingredis import SlidingRedisBackend
+
+
+class TimeFilter(logging.Filter):
+    def filter(self, record):
+        try:
+            last = self.last
+        except AttributeError:
+            last = record.relativeCreated
+        delta = datetime.datetime.fromtimestamp(
+            record.relativeCreated / 1000.0
+        ) - datetime.datetime.fromtimestamp(last / 1000.0)
+        record.relative = "{0:.2f}".format(
+            delta.seconds + delta.microseconds / 1000000.0
+        )
+        self.last = record.relativeCreated
+        return True
+
+
+logger = logging.getLogger("ratelimit")
+logger.setLevel(logging.DEBUG)
+ch = logging.StreamHandler()
+ch.setLevel(logging.DEBUG)
+formatter = logging.Formatter(
+    fmt="+%(relative)s - %(name)s - %(levelname)s - %(message)s"
+)
+logger.addHandler(ch)
+[hndl.addFilter(TimeFilter()) for hndl in logger.handlers]
+[hndl.setFormatter(formatter) for hndl in logger.handlers]
 
 
 async def hello_world(scope, receive, send):
