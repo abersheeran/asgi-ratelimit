@@ -12,21 +12,11 @@ def last_timestamps():
     return [random.choice([time.time() - 60 ** i, None]) for i in range(len(RULENAMES))]
 
 
-@pytest.mark.parametrize(
-    "second", [2, None],
-)
-@pytest.mark.parametrize(
-    "minute", [2, None],
-)
-@pytest.mark.parametrize(
-    "hour", [2, None],
-)
-@pytest.mark.parametrize(
-    "day", [2, None],
-)
-@pytest.mark.parametrize(
-    "month", [2, None],
-)
+@pytest.mark.parametrize("second", [2, None])
+@pytest.mark.parametrize("minute", [2, None])
+@pytest.mark.parametrize("hour", [2, None])
+@pytest.mark.parametrize("day", [2, None])
+@pytest.mark.parametrize("month", [2, None])
 def test_calc_incr_value(last_timestamps, second, minute, hour, day, month):
     result = {}
     if second:
