@@ -1,6 +1,5 @@
 from dataclasses import dataclass
-from typing import Optional, Tuple
-
+from typing import Optional, Tuple, List
 
 WINDOW_SIZE = {
     "second": 1,
@@ -12,6 +11,12 @@ WINDOW_SIZE = {
 
 
 @dataclass
+class LimitFrequency:
+    limit: int
+    granularity: int
+
+
+@dataclass
 class Rule:
     group: str = "default"
 
@@ -20,6 +25,7 @@ class Rule:
     hour: Optional[int] = None
     day: Optional[int] = None
     month: Optional[int] = None
+    custom: List[LimitFrequency] = None
 
     block_time: Optional[int] = None
 
@@ -34,6 +40,10 @@ class Rule:
             if limit is not None:
                 key = f"{path}:{user}:{name}"
                 d[key] = (limit, WINDOW_SIZE[name])
+        if self.custom:
+            for cr in self.custom:
+                key = f"{path}:{user}:{cr.limit}/{cr.granularity}"
+                d[key] = (cr.limit, cr.granularity)
         return d
 
 

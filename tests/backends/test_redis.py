@@ -10,6 +10,7 @@ from ratelimit import RateLimitMiddleware, Rule
 from ratelimit.auths import EmptyInformation
 from ratelimit.backends.redis import RedisBackend
 from ratelimit.backends.slidingredis import SlidingRedisBackend
+from ratelimit.rule import LimitFrequency
 
 
 class TimeFilter(logging.Filter):
@@ -161,7 +162,10 @@ async def test_multiple(redisbackend):
         hello_world,
         auth_func,
         redisbackend(),
-        {r"/multiple": [Rule(second=1, minute=3)]},
+        {
+            r"/multiple": [Rule(second=1, minute=3)],
+            r"/custom": [Rule(custom=[LimitFrequency(limit=3, granularity=2)])],
+        },
     )
     async with httpx.AsyncClient(
         app=rate_limit, base_url="http://testserver"
@@ -195,3 +199,35 @@ async def test_multiple(redisbackend):
             "/multiple", headers={"user": "user", "group": "default"}
         )
         assert response.status_code == 429
+        #  3 times every 2s
+        response = await client.get(
+            "/custom", headers={"user": "user", "group": "default"}
+        )
+        assert response.status_code == 200
+        response = await client.get(
+            "/custom", headers={"user": "user", "group": "default"}
+        )
+        assert response.status_code == 200
+        response = await client.get(
+            "/custom", headers={"user": "user", "group": "default"}
+        )
+        assert response.status_code == 200
+        response = await client.get(
+            "/custom", headers={"user": "user", "group": "default"}
+        )
+        assert response.status_code == 429
+        await asyncio.sleep(1)
+        response = await client.get(
+            "/custom", headers={"user": "user", "group": "default"}
+        )
+        assert response.status_code == 429
+        await asyncio.sleep(0.9)
+        response = await client.get(
+            "/custom", headers={"user": "user", "group": "default"}
+        )
+        assert response.status_code == 429
+        await asyncio.sleep(0.1)
+        response = await client.get(
+            "/custom", headers={"user": "user", "group": "default"}
+        )
+        assert response.status_code == 200

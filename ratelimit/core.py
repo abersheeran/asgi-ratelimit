@@ -54,7 +54,9 @@ class RateLimitMiddleware:
         else:  # If no rule can match, run `self.app` and return
             return await self.app(scope, receive, send)
 
-        has_rule = bool([name for name in RULENAMES if getattr(rule, name) is not None])
+        has_rule = bool(
+            [name for name in RULENAMES if getattr(rule, name) is not None]
+        ) or getattr(rule, "custom")
 
         if not has_rule or await self.backend.allow_request(url_path, user, rule):
             return await self.app(scope, receive, send)
