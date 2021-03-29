@@ -49,14 +49,13 @@ class SlidingRedisBackend(BaseBackend):
         ruleset = rule.ruleset(path, user)
         keys = list(ruleset.keys())
         args = [epoch, json.dumps(ruleset)]
-        from tests.backends.test_redis import logger
-
-        quoted_args = [f"'{a}'" for a in args]
-        cli = f"redis-cli --ldb --eval /tmp/script.lua {' '.join(keys)} , {' '.join(quoted_args)}"
-        logger.debug(cli)
+        # from tests.backends.test_redis import logger
+        # quoted_args = [f"'{a}'" for a in args]
+        # cli = f"redis-cli --ldb --eval /tmp/script.lua {' '.join(keys)} , {' '.join(quoted_args)}"
+        # logger.debug(cli)
         r = await self.sliding_function.execute(keys=keys, args=args)
-        logger.debug(r)
-        logger.debug(f"{epoch} {r}:{all(r)}")
+        # logger.debug(r)
+        # logger.debug(f"{epoch} {r}:{all(r)}")
         return all(r)
 
     async def decrease_limit(self, path: str, user: str, rule: Rule) -> bool:
