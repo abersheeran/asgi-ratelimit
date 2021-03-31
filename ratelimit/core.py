@@ -11,6 +11,11 @@ async def default_429(scope: Scope, receive: Receive, send: Send) -> None:
     await send({"type": "http.response.body", "body": b"", "more_body": False})
 
 
+async def default_401(scope: Scope, receive: Receive, send: Send, exc: Exception) -> None:
+    await send({"type": "http.response.start", "status": 401})
+    await send({"type": "http.response.body", "body": b"", "more_body": False})
+
+
 class RateLimitMiddleware:
     """
     rate limit middleware
