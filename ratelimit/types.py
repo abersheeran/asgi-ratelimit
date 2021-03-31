@@ -7,3 +7,4 @@ Receive = typing.Callable[[], typing.Awaitable[Message]]
 Send = typing.Callable[[Message], typing.Awaitable[None]]
 
 ASGIApp = typing.Callable[[Scope, Receive, Send], typing.Awaitable[None]]
+ASGIAppError = typing.Callable[[Scope, Receive, Send, Exception], typing.Awaitable[None]]
