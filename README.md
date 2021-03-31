@@ -173,3 +173,16 @@ jwt_auth = create_jwt_auth("KEY", "HS256")
 ```
 
 Get `user` and `group` from JWT that in `Authorization` header.
+
+
+### Custom auth error handler
+
+Normally exceptions raised in the authentication function result in an Internal Server Error,
+but you can pass a function to handle the errors and send back the appropriate respone to the
+user.
+```python
+async def handle_auth_error(exc: Exception) -> ASGIApp:
+    return JSONResponse({"message": "Unauthorized access."}, status_code=401)
+
+RateLimitMiddleware(..., on_auth_error=handle_auth_error)
+```
