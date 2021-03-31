@@ -1,5 +1,5 @@
 import re
-from typing import Dict, Sequence, Tuple, Callable, Awaitable
+from typing import Dict, Sequence, Tuple, Callable, Awaitable, Optional
 
 from .types import ASGIApp, Scope, Receive, Send
 from .backends import BaseBackend
@@ -23,6 +23,7 @@ class RateLimitMiddleware:
         backend: BaseBackend,
         config: Dict[str, Sequence[Rule]],
         *,
+        on_auth_error: Optional[Callable[[Exception], Awaitable[ASGIApp]]] = None,
         on_blocked: ASGIApp = default_429,
     ) -> None:
         self.app = app
@@ -31,6 +32,7 @@ class RateLimitMiddleware:
         self.config: Dict[re.Pattern, Sequence[Rule]] = {
             re.compile(path): value for path, value in config.items()
         }
+        self.on_auth_error = on_auth_error
         self.on_blocked = on_blocked
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
@@ -44,7 +46,13 @@ class RateLimitMiddleware:
                 # After finding the first rule that can match the path,
                 # calculate the user ID and group
                 if user is None and group is None:
-                    user, group = await self.authenticate(scope)
+                    try:
+                        user, group = await self.authenticate(scope)
+                    except Exception as exc:
+                        if self.on_auth_error is not None:
+                            reponse = await self.on_auth_error(exc)
+                            return await reponse(scope, receive, send)
+                        raise exc
 
                 # Select the first rule that can be matched
                 _rules = [rule for rule in rules if group == rule.group]
