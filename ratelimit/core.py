@@ -1,18 +1,13 @@
 import re
-from typing import Dict, Sequence, Tuple, Callable, Awaitable
+from typing import Dict, Sequence, Tuple, Callable, Awaitable, Optional
 
-from .types import ASGIApp, ASGIAppError, Scope, Receive, Send
+from .types import ASGIApp, Scope, Receive, Send
 from .backends import BaseBackend
 from .rule import Rule, RULENAMES
 
 
 async def default_429(scope: Scope, receive: Receive, send: Send) -> None:
     await send({"type": "http.response.start", "status": 429})
-    await send({"type": "http.response.body", "body": b"", "more_body": False})
-
-
-async def default_401(scope: Scope, receive: Receive, send: Send, exc: Exception) -> None:
-    await send({"type": "http.response.start", "status": 401})
     await send({"type": "http.response.body", "body": b"", "more_body": False})
 
 
@@ -28,7 +23,7 @@ class RateLimitMiddleware:
         backend: BaseBackend,
         config: Dict[str, Sequence[Rule]],
         *,
-        on_auth_error: ASGIAppError = default_401,
+        on_auth_error: Optional[ASGIApp] = None,
         on_blocked: ASGIApp = default_429,
     ) -> None:
         self.app = app
@@ -54,7 +49,10 @@ class RateLimitMiddleware:
                     try:
                         user, group = await self.authenticate(scope)
                     except Exception as exc:
-                        return await self.on_auth_error(scope, receive, send, exc)
+                        if self.on_auth_error is not None:
+                            reponse = await self.on_auth_error(exc)
+                            return await reponse(scope, receive, send)
+                        raise exc
 
                 # Select the first rule that can be matched
                 _rules = [rule for rule in rules if group == rule.group]
