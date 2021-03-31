@@ -178,7 +178,7 @@ Get `user` and `group` from JWT that in `Authorization` header.
 ### Custom auth error handler
 
 Normally exceptions raised in the authentication function result in an Internal Server Error,
-but you can pass a function to handle the errors and send back the appropriate respone to the
+but you can pass a function to handle the errors and send the appropriate response back to the
 user.
 ```python
 async def handle_auth_error(exc: Exception) -> ASGIApp:
