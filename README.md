@@ -193,7 +193,7 @@ from fastapi.responses import JSONResponse
 from ratelimit.types import ASGIApp, Scope, Receive, Send
 
 async def handle_auth_error(exc: Exception) -> ASGIApp:
-    def response(scope: Scope, receive: Receive, send: Send):
+    async def response(scope: Scope, receive: Receive, send: Send):
         # do something here e.g.
         # await send({"type": "http.response.start", "status": 429})
     return response

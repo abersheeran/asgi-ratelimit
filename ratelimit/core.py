@@ -23,7 +23,7 @@ class RateLimitMiddleware:
         backend: BaseBackend,
         config: Dict[str, Sequence[Rule]],
         *,
-        on_auth_error: Optional[ASGIApp] = None,
+        on_auth_error: Optional[Callable[[Exception], Awaitable[ASGIApp]]] = None,
         on_blocked: ASGIApp = default_429,
     ) -> None:
         self.app = app
