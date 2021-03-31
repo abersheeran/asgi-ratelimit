@@ -152,11 +152,6 @@ async def test_redis(redisbackend):
         )
         assert response.status_code == 200
 
-        response = await client.get(
-            "/block", headers=None
-        )
-        assert response.status_code == 401
-
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("redisbackend", [SlidingRedisBackend])
