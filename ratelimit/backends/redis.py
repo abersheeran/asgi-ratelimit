@@ -57,16 +57,14 @@ class RedisBackend(BaseBackend):
         """
         Return True means successful decrease.
         """
-        is_success = await self.decrease_function.execute(
-            keys=[
-                f"{path}:{user}:{name}"
-                for name in RULENAMES
-                if getattr(rule, name) is not None
-            ]
-        )
-        from tests.backends.test_redis import logger
-
-        logger.debug(f"{path} {user} : {rule}, {is_success}")
+        names = [
+            f"{path}:{user}:{name}"
+            for name in RULENAMES
+            if getattr(rule, name) is not None
+        ]
+        # from tests.backends.test_redis import logger
+        # logger.debug(f"{path} {user} : {rule}, {{key: await self._redis.get(key) for key in names}}")
+        is_success = await self.decrease_function.execute(keys=names)
         return bool(is_success)
 
     async def set_block_time(self, user: str, block_time: int) -> None:

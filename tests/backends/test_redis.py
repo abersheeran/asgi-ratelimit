@@ -154,7 +154,52 @@ async def test_redis(redisbackend):
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("redisbackend", [RedisBackend, SlidingRedisBackend])
+@pytest.mark.parametrize("redisbackend", [RedisBackend])
+async def test_multiple_(redisbackend):
+    await StrictRedis().flushdb()
+    rate_limit = RateLimitMiddleware(
+        hello_world,
+        auth_func,
+        redisbackend(),
+        {r"/multiple": [Rule(second=1, minute=3)]},
+    )
+    async with httpx.AsyncClient(
+        app=rate_limit, base_url="http://testserver"
+    ) as client:  # type: httpx.AsyncClient
+
+        # multiple 1/s and 3/min
+        # 1 3
+        response = await client.get(
+            "/multiple", headers={"user": "user", "group": "default"}
+        )
+        assert response.status_code == 200
+        # 1-1 3-1 = 0 2
+        response = await client.get(
+            "/multiple", headers={"user": "user", "group": "default"}
+        )
+        assert response.status_code == 429
+        await asyncio.sleep(1)
+        # 0+1 2+0 = 1 2
+        response = await client.get(
+            "/multiple", headers={"user": "user", "group": "default"}
+        )
+        assert response.status_code == 200
+        # 1-1 2-1 = 0 1
+        response = await client.get(
+            "/multiple", headers={"user": "user", "group": "default"}
+        )
+        assert response.status_code == 429
+        await asyncio.sleep(2)
+        # 0+1 1+0 = 1 1
+        response = await client.get(
+            "/multiple", headers={"user": "user", "group": "default"}
+        )
+        assert response.status_code == 200
+        # 1-1 1-1 = 0 0
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("redisbackend", [SlidingRedisBackend])
 async def test_multiple(redisbackend):
     await StrictRedis().flushdb()
     rate_limit = RateLimitMiddleware(
