@@ -37,15 +37,11 @@ class RedisBackend(BaseBackend):
         """
         Return True means successful increase.
         """
-        incr_dict = rule.ruleset(path, user)
-        if not incr_dict:
-            return None
-
         async with await self._redis.pipeline() as pipe:  # type: StrictPipeline
             try:
                 await pipe.watch(*[f"{path}:{user}:{name}" for name in RULENAMES])
                 pipe.multi()
-                for key, (count, ttl) in incr_dict.items():
+                for key, (count, ttl) in rule.ruleset(path, user).items():
                     await pipe.set(key, count, ex=ttl, nx=True)
                 await pipe.execute()
             except WatchError:  # pragma: no cover
