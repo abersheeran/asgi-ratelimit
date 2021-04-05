@@ -7,13 +7,13 @@ from . import BaseBackend
 
 DECREASE_SCRIPT = """
 for i = 1, #KEYS do
-    local value = redis.pcall('GET', KEYS[i])
+    local value = redis.call('GET', KEYS[i])
     if value and tonumber(value) < 1 then
         return 0
     end
 end
 for i, key in pairs(KEYS) do
-    redis.pcall('DECR', key)
+    redis.call('DECR', key)
 end
 return 1
 """
