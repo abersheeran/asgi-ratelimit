@@ -54,6 +54,8 @@ app.add_middleware(
 )
 ```
 
+> :warning: **The pattern's order is important, rules are set on the first match**: Be careful here !
+ 
 Next, provide a custom authenticate function, or use one of the [existing auth methods](#built-in-auth-functions).
 
 ```python
