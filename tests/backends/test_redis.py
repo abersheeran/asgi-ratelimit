@@ -6,11 +6,11 @@ import httpx
 import pytest
 from aredis import StrictRedis
 
-from ratelimit import RateLimitMiddleware, Rule
+from ratelimit import RateLimitMiddleware, FixedRule
 from ratelimit.auths import EmptyInformation
 from ratelimit.backends.redis import RedisBackend
 from ratelimit.backends.slidingredis import SlidingRedisBackend
-from ratelimit.rule import LimitFrequency
+from ratelimit.rule import LimitFrequency, CustomRule
 
 
 class TimeFilter(logging.Filter):
@@ -26,6 +26,16 @@ class TimeFilter(logging.Filter):
             delta.seconds + delta.microseconds / 1000000.0
         )
         self.last = record.relativeCreated
+
+        try:
+            first = self.first
+        except AttributeError:
+            first = record.created
+            self.first = record.created
+        deltastart = datetime.datetime.fromtimestamp(record.created) - datetime.datetime.fromtimestamp(first)
+        record.relativestart = "{0:.2f}".format(
+                deltastart.seconds + deltastart.microseconds / 1000000.0
+            )
         return True
 
 
@@ -34,7 +44,7 @@ logger.setLevel(logging.DEBUG)
 ch = logging.StreamHandler()
 ch.setLevel(logging.DEBUG)
 formatter = logging.Formatter(
-    fmt="+%(relative)s - %(name)s - %(levelname)s - %(message)s"
+    fmt="Total:%(relativestart)s (+%(relative)s) - %(name)s - %(levelname)s - %(message)s"
 )
 logger.addHandler(ch)
 [hndl.addFilter(TimeFilter()) for hndl in logger.handlers]
@@ -76,9 +86,9 @@ async def test_redis(redisbackend):
         auth_func,
         redisbackend(),
         {
-            r"/second_limit": [Rule(second=1), Rule(group="admin")],
-            r"/minute.*": [Rule(minute=1), Rule(group="admin")],
-            r"/block": [Rule(second=1, block_time=5)],
+            r"/second_limit": [FixedRule(second=1), FixedRule(group="admin")],
+            r"/minute.*": [FixedRule(minute=1), FixedRule(group="admin")],
+            r"/block": [FixedRule(second=1, block_time=5)],
         },
     )
     async with httpx.AsyncClient(
@@ -163,8 +173,9 @@ async def test_multiple(redisbackend):
         auth_func,
         redisbackend(),
         {
-            r"/multiple": [Rule(second=1, minute=3)],
-            r"/custom": [Rule(custom=[LimitFrequency(limit=3, granularity=2)])],
+            r"^/multiple$": [FixedRule(second=1, minute=3)],
+            r"^/custom$": [CustomRule(rules=[LimitFrequency(limit=3, granularity=2)])],
+            r"^/multiple_custom$": [CustomRule(rules=[LimitFrequency(limit=3, granularity=2), LimitFrequency(limit=6, granularity=5)])],
         },
     )
     async with httpx.AsyncClient(
@@ -173,61 +184,95 @@ async def test_multiple(redisbackend):
 
         # multiple 1/s and 3/min
         # 1 3
-        response = await client.get(
-            "/multiple", headers={"user": "user", "group": "default"}
-        )
-        assert response.status_code == 200
-        # 1-1 3-1 = 0 2
-        response = await client.get(
-            "/multiple", headers={"user": "user", "group": "default"}
-        )
-        assert response.status_code == 429
-        await asyncio.sleep(1)
-        # 0+1 2-1 = 1 1
-        response = await client.get(
-            "/multiple", headers={"user": "user", "group": "default"}
-        )
-        assert response.status_code == 200
-        # 1-1 1-1 = 0 0
-        response = await client.get(
-            "/multiple", headers={"user": "user", "group": "default"}
-        )
-        assert response.status_code == 429
-        await asyncio.sleep(2)
-        # 0+1 0+0 = 1 0
-        response = await client.get(
-            "/multiple", headers={"user": "user", "group": "default"}
-        )
-        assert response.status_code == 429
+        # response = await client.get(
+        #     "/multiple", headers={"user": "user", "group": "default"}
+        # )
+        # assert response.status_code == 200
+        # # 1-1 3-1 = 0 2
+        # response = await client.get(
+        #     "/multiple", headers={"user": "user", "group": "default"}
+        # )
+        # assert response.status_code == 429
+        # await asyncio.sleep(1)
+        # # 0+1 2-1 = 1 1
+        # response = await client.get(
+        #     "/multiple", headers={"user": "user", "group": "default"}
+        # )
+        # assert response.status_code == 200
+        # # 1-1 1-1 = 0 0
+        # response = await client.get(
+        #     "/multiple", headers={"user": "user", "group": "default"}
+        # )
+        # assert response.status_code == 429
+        # await asyncio.sleep(2)
+        # # 0+1 0+0 = 1 0
+        # response = await client.get(
+        #     "/multiple", headers={"user": "user", "group": "default"}
+        # )
+        # assert response.status_code == 429
+
         #  3 times every 2s
+        # response = await client.get(
+        #     "/custom", headers={"user": "user", "group": "default"}
+        # )
+        # assert response.status_code == 200
+        # response = await client.get(
+        #     "/custom", headers={"user": "user", "group": "default"}
+        # )
+        # assert response.status_code == 200
+        # response = await client.get(
+        #     "/custom", headers={"user": "user", "group": "default"}
+        # )
+        # assert response.status_code == 200
+        # response = await client.get(
+        #     "/custom", headers={"user": "user", "group": "default"}
+        # )
+        # assert response.status_code == 429
+        # await asyncio.sleep(1)
+        # response = await client.get(
+        #     "/custom", headers={"user": "user", "group": "default"}
+        # )
+        # assert response.status_code == 429
+        # await asyncio.sleep(0.9)
+        # response = await client.get(
+        #     "/custom", headers={"user": "user", "group": "default"}
+        # )
+        # assert response.status_code == 429
+        # await asyncio.sleep(0.1)
+        # response = await client.get(
+        #     "/custom", headers={"user": "user", "group": "default"}
+        # )
+        # assert response.status_code == 200
+
+        # multiple custom ie 3/2s and 6/5s
         response = await client.get(
-            "/custom", headers={"user": "user", "group": "default"}
+            "/multiple_custom", headers={"user": "user", "group": "default"}
         )
         assert response.status_code == 200
         response = await client.get(
-            "/custom", headers={"user": "user", "group": "default"}
+            "/multiple_custom", headers={"user": "user", "group": "default"}
         )
         assert response.status_code == 200
         response = await client.get(
-            "/custom", headers={"user": "user", "group": "default"}
+            "/multiple_custom", headers={"user": "user", "group": "default"}
         )
         assert response.status_code == 200
         response = await client.get(
-            "/custom", headers={"user": "user", "group": "default"}
+            "/multiple_custom", headers={"user": "user", "group": "default"}
         )
         assert response.status_code == 429
+        # reset the 2s limit
+        await asyncio.sleep(2)
+        response = await client.get(
+            "/multiple_custom", headers={"user": "user", "group": "default"}
+        )
+        assert response.status_code == 200
+        response = await client.get(
+            "/multiple_custom", headers={"user": "user", "group": "default"}
+        )
         await asyncio.sleep(1)
+        assert response.status_code == 200
         response = await client.get(
-            "/custom", headers={"user": "user", "group": "default"}
-        )
-        assert response.status_code == 429
-        await asyncio.sleep(0.9)
-        response = await client.get(
-            "/custom", headers={"user": "user", "group": "default"}
-        )
-        assert response.status_code == 429
-        await asyncio.sleep(0.1)
-        response = await client.get(
-            "/custom", headers={"user": "user", "group": "default"}
+            "/multiple_custom", headers={"user": "user", "group": "default"}
         )
         assert response.status_code == 200

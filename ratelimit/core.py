@@ -3,7 +3,7 @@ from typing import Dict, Sequence, Tuple, Callable, Awaitable
 
 from .types import ASGIApp, Scope, Receive, Send
 from .backends import BaseBackend
-from .rule import Rule, RULENAMES
+from .rule import FixedRule, RULENAMES, CustomRule
 
 
 async def default_429(scope: Scope, receive: Receive, send: Send) -> None:
@@ -21,14 +21,14 @@ class RateLimitMiddleware:
         app: ASGIApp,
         authenticate: Callable[[Scope], Awaitable[Tuple[str, str]]],
         backend: BaseBackend,
-        config: Dict[str, Sequence[Rule]],
+        config: Dict[str, Sequence[FixedRule]],
         *,
         on_blocked: ASGIApp = default_429,
     ) -> None:
         self.app = app
         self.authenticate = authenticate
         self.backend = backend
-        self.config: Dict[re.Pattern, Sequence[Rule]] = {
+        self.config: Dict[re.Pattern, Sequence[FixedRule]] = {
             re.compile(path): value for path, value in config.items()
         }
         self.on_blocked = on_blocked
@@ -54,9 +54,14 @@ class RateLimitMiddleware:
         else:  # If no rule can match, run `self.app` and return
             return await self.app(scope, receive, send)
 
-        has_rule = bool(
-            [name for name in RULENAMES if getattr(rule, name) is not None]
-        ) or getattr(rule, "custom")
+        if isinstance(rule, FixedRule):
+            has_rule = bool(
+                [name for name in RULENAMES if getattr(rule, name) is not None]
+            )
+        elif isinstance(rule, CustomRule):
+            has_rule = True
+        else:
+            has_rule = False
 
         if not has_rule or await self.backend.allow_request(url_path, user, rule):
             return await self.app(scope, receive, send)

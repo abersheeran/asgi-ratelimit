@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from datetime import datetime, timedelta
 from typing import Dict, Sequence
 
-from ..rule import Rule
+from ..rule import FixedRule
 
 
 class BaseBackend(ABC):
@@ -13,7 +13,7 @@ class BaseBackend(ABC):
 
     @staticmethod
     def calc_incr_value(
-        last_timestamps: Sequence[float], rule: Rule
+        last_timestamps: Sequence[float], rule: FixedRule
     ) -> Dict[str, Dict[str, int]]:
 
         now_timestamp = time.time()
@@ -60,11 +60,11 @@ class BaseBackend(ABC):
         return incr_dict
 
     @abstractmethod
-    async def decrease_limit(self, path: str, user: str, rule: Rule) -> bool:
+    async def decrease_limit(self, path: str, user: str, rule: FixedRule) -> bool:
         raise NotImplementedError()
 
     @abstractmethod
-    async def increase_limit(self, path: str, user: str, rule: Rule) -> bool:
+    async def increase_limit(self, path: str, user: str, rule: FixedRule) -> bool:
         raise NotImplementedError()
 
     @abstractmethod
@@ -75,7 +75,7 @@ class BaseBackend(ABC):
     async def is_blocking(self, user: str) -> bool:
         raise NotImplementedError()
 
-    async def allow_request(self, path: str, user: str, rule: Rule) -> bool:
+    async def allow_request(self, path: str, user: str, rule: FixedRule) -> bool:
         if await self.is_blocking(user):
             return False
 

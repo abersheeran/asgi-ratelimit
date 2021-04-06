@@ -4,7 +4,7 @@ import random
 import pytest
 
 from ratelimit.backends import BaseBackend
-from ratelimit.rule import Rule, RULENAMES
+from ratelimit.rule import FixedRule, RULENAMES
 
 
 @pytest.fixture
@@ -32,7 +32,7 @@ def test_calc_incr_value(last_timestamps, second, minute, hour, day, month):
 
     assert (
         BaseBackend.calc_incr_value(
-            last_timestamps, Rule("default", second, minute, hour, day, month)
+            last_timestamps, FixedRule("default", second, minute, hour, day, month)
         )
         == result
     )

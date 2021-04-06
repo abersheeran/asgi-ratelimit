@@ -17,7 +17,22 @@ class LimitFrequency:
 
 
 @dataclass
-class Rule:
+class CustomRule:
+    group: str = "default"
+    rules: List[LimitFrequency] = None
+
+    def ruleset(self, path, user):
+        d = {}
+        for cr in self.rules:
+            key = f"{path}:{user}:{cr.limit}/{cr.granularity}"
+            d[key] = (cr.limit, cr.granularity)
+        return d
+
+    block_time: Optional[int] = None
+
+
+@dataclass
+class FixedRule:
     group: str = "default"
 
     second: Optional[int] = None
@@ -25,7 +40,6 @@ class Rule:
     hour: Optional[int] = None
     day: Optional[int] = None
     month: Optional[int] = None
-    custom: List[LimitFrequency] = None
 
     block_time: Optional[int] = None
 
@@ -40,10 +54,6 @@ class Rule:
             if limit is not None:
                 key = f"{path}:{user}:{name}"
                 d[key] = (limit, WINDOW_SIZE[name])
-        if self.custom:
-            for cr in self.custom:
-                key = f"{path}:{user}:{cr.limit}/{cr.granularity}"
-                d[key] = (cr.limit, cr.granularity)
         return d
 
 

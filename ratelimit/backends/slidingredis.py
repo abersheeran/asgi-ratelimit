@@ -3,7 +3,7 @@ import time
 
 from aredis import StrictRedis
 
-from ..rule import Rule
+from ..rule import FixedRule
 from . import BaseBackend
 
 
@@ -11,9 +11,12 @@ SLIDING_WINDOW_SCRIPT = """
 -- Set variables from arguments
 local now = tonumber(ARGV[1])
 local ruleset = cjson.decode(ARGV[2])
+local result = {}
 -- ruleset looks like this:
 -- {key: [limit, window_size], ...}
 local scores = {}
+local min = {}
+local expire_in = {}
 for i, pgname in ipairs(KEYS) do
     -- we remove keys older than now - window_size
     local clearBefore = now - ruleset[pgname][2]
@@ -28,8 +31,12 @@ for i, pgname in ipairs(KEYS) do
     redis.call('EXPIRE', pgname, ruleset[pgname][2])
     -- calculate the remaining amount of requests. If >= 0 then request for that window is allowed
     scores[i] = ruleset[pgname][1] - amount
+    min[i] = redis.call('ZRANGE', pgname, 0, 0)[1]
+    expire_in[i] = - now + tonumber(min[i]) + ruleset[pgname][2]
 end
-return scores
+result['scores'] = scores
+result['expire_in'] = expire_in
+return cjson.encode(result)
 """
 
 
@@ -44,24 +51,26 @@ class SlidingRedisBackend(BaseBackend):
         self._redis = StrictRedis(host=host, port=port, db=db, password=password)
         self.sliding_function = self._redis.register_script(SLIDING_WINDOW_SCRIPT)
 
-    async def get_limits(self, path: str, user: str, rule: Rule) -> bool:
+    async def get_limits(self, path: str, user: str, rule: FixedRule) -> bool:
         epoch = time.time()
         ruleset = rule.ruleset(path, user)
         keys = list(ruleset.keys())
         args = [epoch, json.dumps(ruleset)]
-        # from tests.backends.test_redis import logger
-        # quoted_args = [f"'{a}'" for a in args]
-        # cli = f"redis-cli --ldb --eval /tmp/script.lua {' '.join(keys)} , {' '.join(quoted_args)}"
+        from tests.backends.test_redis import logger
+        quoted_args = [f"'{a}'" for a in args]
+        cli = f"redis-cli --ldb --eval /tmp/script.lua {' '.join(keys)} , {' '.join(quoted_args)}"
         # logger.debug(cli)
         r = await self.sliding_function.execute(keys=keys, args=args)
-        # logger.debug(r)
-        # logger.debug(f"{epoch} {r}:{all(r)}")
-        return all(r)
+        mr = json.loads(r.decode())
+        logger.debug('\n')
+        logger.debug(mr)
+        # logger.debug(f"{epoch} {mr['scores']}:{all(r)}")
+        return all(mr["scores"])
 
-    async def decrease_limit(self, path: str, user: str, rule: Rule) -> bool:
+    async def decrease_limit(self, path: str, user: str, rule: FixedRule) -> bool:
         raise NotImplementedError()
 
-    async def increase_limit(self, path: str, user: str, rule: Rule) -> bool:
+    async def increase_limit(self, path: str, user: str, rule: FixedRule) -> bool:
         raise NotImplementedError()
 
     async def set_block_time(self, user: str, block_time: int) -> None:
@@ -70,7 +79,7 @@ class SlidingRedisBackend(BaseBackend):
     async def is_blocking(self, user: str) -> bool:
         return bool(await self._redis.get(f"blocking:{user}"))
 
-    async def allow_request(self, path: str, user: str, rule: Rule) -> bool:
+    async def allow_request(self, path: str, user: str, rule: FixedRule) -> bool:
         if await self.is_blocking(user):
             return False
 

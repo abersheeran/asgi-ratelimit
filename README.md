@@ -27,18 +27,17 @@ The following example will limit users under the `"default"` group to access `/t
 ```python
 from typing import Tuple
 
-from ratelimit import RateLimitMiddleware, Rule
+from ratelimit import RateLimitMiddleware, FixedRule
 from ratelimit.auths import EmptyInformation
 from ratelimit.backends.redis import RedisBackend
-
 
 rate_limit = RateLimitMiddleware(
     ASGI_APP,
     AUTH_FUNCTION,
     RedisBackend(),
     {
-        r"^/towns": [Rule(second=1, group="default"), Rule(group="admin")],
-        r"^/forests": [Rule(minute=1, group="default"), Rule(group="admin")],
+        r"^/towns": [FixedRule(second=1, group="default"), FixedRule(group="admin")],
+        r"^/forests": [FixedRule(minute=1, group="default"), FixedRule(group="admin")],
     },
 )
 
@@ -48,8 +47,8 @@ app.add_middleware(
     authenticate=AUTH_FUNCTION,
     backend=RedisBackend(),
     config={
-        r"^/towns": [Rule(second=1, group="default"), Rule(group="admin")],
-        r"^/forests": [Rule(minute=1, group="default"), Rule(group="admin")],
+        r"^/towns": [FixedRule(second=1, group="default"), FixedRule(group="admin")],
+        r"^/forests": [FixedRule(minute=1, group="default"), FixedRule(group="admin")],
     },
 )
 ```
