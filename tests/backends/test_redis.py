@@ -32,10 +32,12 @@ class TimeFilter(logging.Filter):
         except AttributeError:
             first = record.created
             self.first = record.created
-        deltastart = datetime.datetime.fromtimestamp(record.created) - datetime.datetime.fromtimestamp(first)
+        deltastart = datetime.datetime.fromtimestamp(
+            record.created
+        ) - datetime.datetime.fromtimestamp(first)
         record.relativestart = "{0:.2f}".format(
-                deltastart.seconds + deltastart.microseconds / 1000000.0
-            )
+            deltastart.seconds + deltastart.microseconds / 1000000.0
+        )
         return True
 
 
@@ -175,7 +177,14 @@ async def test_multiple(redisbackend):
         {
             r"^/multiple$": [FixedRule(second=1, minute=3)],
             r"^/custom$": [CustomRule(rules=[LimitFrequency(limit=3, granularity=2)])],
-            r"^/multiple_custom$": [CustomRule(rules=[LimitFrequency(limit=3, granularity=2), LimitFrequency(limit=6, granularity=5)])],
+            r"^/multiple_custom$": [
+                CustomRule(
+                    rules=[
+                        LimitFrequency(limit=3, granularity=2),
+                        LimitFrequency(limit=7, granularity=5),
+                    ]
+                )
+            ],
         },
     )
     async with httpx.AsyncClient(
@@ -244,7 +253,7 @@ async def test_multiple(redisbackend):
         # )
         # assert response.status_code == 200
 
-        # multiple custom ie 3/2s and 6/5s
+        # multiple custom ie 3/2s and 7/5s
         response = await client.get(
             "/multiple_custom", headers={"user": "user", "group": "default"}
         )
@@ -261,7 +270,7 @@ async def test_multiple(redisbackend):
             "/multiple_custom", headers={"user": "user", "group": "default"}
         )
         assert response.status_code == 429
-        # reset the 2s limit
+        # reset the 2s limit, we're at 4 hits
         await asyncio.sleep(2)
         response = await client.get(
             "/multiple_custom", headers={"user": "user", "group": "default"}
@@ -270,9 +279,14 @@ async def test_multiple(redisbackend):
         response = await client.get(
             "/multiple_custom", headers={"user": "user", "group": "default"}
         )
-        await asyncio.sleep(1)
+        await asyncio.sleep(2)
         assert response.status_code == 200
         response = await client.get(
             "/multiple_custom", headers={"user": "user", "group": "default"}
         )
         assert response.status_code == 200
+        # we're hitting the 7/5s limit
+        response = await client.get(
+            "/multiple_custom", headers={"user": "user", "group": "default"}
+        )
+        assert response.status_code == 429

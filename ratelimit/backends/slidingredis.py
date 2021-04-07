@@ -62,7 +62,7 @@ class SlidingRedisBackend(BaseBackend):
         # logger.debug(cli)
         r = await self.sliding_function.execute(keys=keys, args=args)
         mr = json.loads(r.decode())
-        logger.debug('\n')
+        logger.debug("\n")
         logger.debug(mr)
         # logger.debug(f"{epoch} {mr['scores']}:{all(r)}")
         return all(mr["scores"])
