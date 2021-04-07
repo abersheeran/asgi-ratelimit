@@ -57,6 +57,7 @@ class SlidingRedisBackend(BaseBackend):
         keys = list(ruleset.keys())
         args = [epoch, json.dumps(ruleset)]
         from tests.backends.test_redis import logger
+
         quoted_args = [f"'{a}'" for a in args]
         cli = f"redis-cli --ldb --eval /tmp/script.lua {' '.join(keys)} , {' '.join(quoted_args)}"
         # logger.debug(cli)
