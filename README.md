@@ -144,6 +144,22 @@ async def yourself_429(scope: Scope, receive: Receive, send: Send) -> None:
 RateLimitMiddleware(..., on_blocked=yourself_429)
 ```
 
+#### JSON response
+
+Example code when using Starlette to return 429 responses in JSON format. Other [response classes](https://www.starlette.io/responses/) are also available.
+
+```python
+from starlette.responses import JSONResponse
+
+
+async def yourself_429(scope, receive, send) -> None:
+    response = JSONResponse({'message': 'Too Many Requests'}, status_code=429)
+    await response(scope, receive, send)
+
+
+RateLimitMiddleware(..., on_blocked=yourself_429)
+```
+
 ### Built-in auth functions
 
 #### Client IP
