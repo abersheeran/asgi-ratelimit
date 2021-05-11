@@ -1,10 +1,9 @@
 import httpx
 import pytest
 
-from ratelimit import RateLimitMiddleware, Rule
+from ratelimit import RateLimitMiddleware, FixedRule
 from ratelimit.auths import EmptyInformation
 from ratelimit.backends.redis import RedisBackend
-from ratelimit.backends.slidingredis import SlidingRedisBackend
 
 
 async def hello_world(scope, receive, send):
@@ -48,7 +47,7 @@ async def test_on_auth_error_default():
         auth_func,
         RedisBackend(),
         {
-            r"/": [Rule(group="admin")],
+            r"/": [FixedRule(group="admin")],
         },
     )
     async with httpx.AsyncClient(
@@ -76,7 +75,7 @@ async def test_on_auth_error_with_handler():
         auth_func,
         RedisBackend(),
         {
-            r"/": [Rule(group="admin")],
+            r"/": [FixedRule(group="admin")],
         },
         on_auth_error=handle_auth_error,
     )
@@ -91,3 +90,17 @@ async def test_on_auth_error_with_handler():
         response = await client.get("/", headers=None)
         assert response.status_code == 401
         assert response.text == ""
+
+
+@pytest.mark.asyncio
+async def test_error_if_retry_after_set_incorrectly():
+    with pytest.raises(ValueError):
+        rate_limit = RateLimitMiddleware(hello_world, auth_func, RedisBackend(), {}, retry_after_enabled=True)
+    with pytest.raises(ValueError):
+        rate_limit = RateLimitMiddleware(hello_world, auth_func, RedisBackend(), {}, retry_after_enabled=True, retry_after_type="not_available_value")
+
+
+@pytest.mark.parametrize("retry_after_type", ["seconds", "httpdate"])
+@pytest.mark.asyncio
+async def test_no_error_if_retry_after_set_correctly(retry_after_type):
+    rate_limit = RateLimitMiddleware(hello_world, auth_func, RedisBackend(), {}, retry_after_enabled=True, retry_after_type=retry_after_type)

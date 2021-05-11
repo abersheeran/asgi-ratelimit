@@ -1,5 +1,7 @@
+import dataclasses
 import re
-from typing import Dict, Sequence, Tuple, Callable, Awaitable, Optional
+from datetime import datetime
+from typing import Dict, Sequence, Tuple, Callable, Awaitable, Optional, Union, Literal
 
 from .types import ASGIApp, Scope, Receive, Send
 from .backends import BaseBackend
@@ -9,6 +11,7 @@ from .rule import FixedRule, RULENAMES, CustomRule
 async def default_429(scope: Scope, receive: Receive, send: Send) -> None:
     await send({"type": "http.response.start", "status": 429})
     await send({"type": "http.response.body", "body": b"", "more_body": False})
+
 
 
 class RateLimitMiddleware:
@@ -25,6 +28,8 @@ class RateLimitMiddleware:
         *,
         on_auth_error: Optional[Callable[[Exception], Awaitable[ASGIApp]]] = None,
         on_blocked: ASGIApp = default_429,
+        retry_after_enabled: bool = False,
+        retry_after_type: Optional[Literal["seconds", "httpdate"]] = None
     ) -> None:
         self.app = app
         self.authenticate = authenticate
@@ -34,6 +39,8 @@ class RateLimitMiddleware:
         }
         self.on_auth_error = on_auth_error
         self.on_blocked = on_blocked
+        if retry_after_enabled and not retry_after_type in ["seconds", "httpdate"]:
+            raise ValueError("retry_after_type must be set to either 'seconds' or 'httpdate' if retry_after_enabled is True")
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         if scope["type"] != "http":  # pragma: no cover
