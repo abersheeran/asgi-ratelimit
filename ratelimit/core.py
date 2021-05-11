@@ -13,7 +13,6 @@ async def default_429(scope: Scope, receive: Receive, send: Send) -> None:
     await send({"type": "http.response.body", "body": b"", "more_body": False})
 
 
-
 class RateLimitMiddleware:
     """
     rate limit middleware
@@ -39,8 +38,15 @@ class RateLimitMiddleware:
         }
         self.on_auth_error = on_auth_error
         self.on_blocked = on_blocked
-        if retry_after_enabled and not retry_after_type in ["seconds", "httpdate"]:
-            raise ValueError("retry_after_type must be set to either 'seconds' or 'httpdate' if retry_after_enabled is True")
+        self.retry_after_enabled = retry_after_enabled
+        self.retry_after_type = retry_after_type
+        if self.retry_after_enabled and not self.retry_after_type in [
+            "seconds",
+            "httpdate",
+        ]:
+            raise ValueError(
+                "retry_after_type must be set to either 'seconds' or 'httpdate' if retry_after_enabled is True"
+            )
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         if scope["type"] != "http":  # pragma: no cover
@@ -78,7 +84,10 @@ class RateLimitMiddleware:
         else:
             has_rule = False
 
-        if not has_rule or await self.backend.allow_request(url_path, user, rule):
-            return await self.app(scope, receive, send)
+        if self.retry_after_enabled:
+            pass
+        else:
+            if not has_rule or await self.backend.allow_request(url_path, user, rule):
+                return await self.app(scope, receive, send)
 
         return await self.on_blocked(scope, receive, send)

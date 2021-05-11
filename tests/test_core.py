@@ -37,6 +37,7 @@ async def handle_auth_error(exc):
     async def send_response(scope, receive, send):
         await send({"type": "http.response.start", "status": 401})
         await send({"type": "http.response.body", "body": b"", "more_body": False})
+
     return send_response
 
 
@@ -53,7 +54,6 @@ async def test_on_auth_error_default():
     async with httpx.AsyncClient(
         app=rate_limit, base_url="http://testserver"
     ) as client:  # type: httpx.AsyncClient
-
 
         response = await client.get("/", headers={"user": "test", "group": "default"})
         assert response.status_code == 200
@@ -95,12 +95,28 @@ async def test_on_auth_error_with_handler():
 @pytest.mark.asyncio
 async def test_error_if_retry_after_set_incorrectly():
     with pytest.raises(ValueError):
-        rate_limit = RateLimitMiddleware(hello_world, auth_func, RedisBackend(), {}, retry_after_enabled=True)
+        rate_limit = RateLimitMiddleware(
+            hello_world, auth_func, RedisBackend(), {}, retry_after_enabled=True
+        )
     with pytest.raises(ValueError):
-        rate_limit = RateLimitMiddleware(hello_world, auth_func, RedisBackend(), {}, retry_after_enabled=True, retry_after_type="not_available_value")
+        rate_limit = RateLimitMiddleware(
+            hello_world,
+            auth_func,
+            RedisBackend(),
+            {},
+            retry_after_enabled=True,
+            retry_after_type="not_available_value",
+        )
 
 
 @pytest.mark.parametrize("retry_after_type", ["seconds", "httpdate"])
 @pytest.mark.asyncio
 async def test_no_error_if_retry_after_set_correctly(retry_after_type):
-    rate_limit = RateLimitMiddleware(hello_world, auth_func, RedisBackend(), {}, retry_after_enabled=True, retry_after_type=retry_after_type)
+    rate_limit = RateLimitMiddleware(
+        hello_world,
+        auth_func,
+        RedisBackend(),
+        {},
+        retry_after_enabled=True,
+        retry_after_type=retry_after_type,
+    )

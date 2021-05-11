@@ -81,7 +81,12 @@ async def auth_func(scope):
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("redisbackend", [SlidingRedisBackend, RedisBackend])
-async def test_redis(redisbackend):
+@pytest.mark.parametrize(
+    "retry_after_param",
+    [(False, None), (True, "seconds"), (True, "httpdate")],
+    ids=["retry-after not set", "retry-after in seconds", "retry-after as a http date"],
+)
+async def test_redis(redisbackend, retry_after_param):
     await StrictRedis().flushdb()
     rate_limit = RateLimitMiddleware(
         hello_world,
@@ -92,6 +97,8 @@ async def test_redis(redisbackend):
             r"/minute.*": [FixedRule(minute=1), FixedRule(group="admin")],
             r"/block": [FixedRule(second=1, block_time=5)],
         },
+        retry_after_enabled=retry_after_param[0],
+        retry_after_type=retry_after_param[1],
     )
     async with httpx.AsyncClient(
         app=rate_limit, base_url="http://testserver"
@@ -168,7 +175,12 @@ async def test_redis(redisbackend):
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("redisbackend", [SlidingRedisBackend])
-async def test_multiple(redisbackend):
+@pytest.mark.parametrize(
+    "retry_after_param",
+    [(False, None), (True, "seconds"), (True, "httpdate")],
+    ids=["retry-after not set", "retry-after in seconds", "retry-after as a http date"],
+)
+async def test_multiple(redisbackend, retry_after_param):
     await StrictRedis().flushdb()
     rate_limit = RateLimitMiddleware(
         hello_world,
@@ -186,6 +198,8 @@ async def test_multiple(redisbackend):
                 )
             ],
         },
+        retry_after_enabled=retry_after_param[0],
+        retry_after_type=retry_after_param[1],
     )
     async with httpx.AsyncClient(
         app=rate_limit, base_url="http://testserver"
