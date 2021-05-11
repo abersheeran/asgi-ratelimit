@@ -35,7 +35,7 @@ class RateLimitMiddleware:
         on_auth_error: Optional[Callable[[Exception], Awaitable[ASGIApp]]] = None,
         on_blocked: ASGIApp = default_429,
         retry_after_enabled: bool = False,
-        retry_after_type: Optional[Literal["seconds", "httpdate"]] = None
+        retry_after_type: Optional[Literal["seconds", "httpdate"]] = None,
     ) -> None:
         self.app = app
         self.authenticate = authenticate

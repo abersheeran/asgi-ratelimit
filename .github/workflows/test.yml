@@ -7,8 +7,8 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.6, 3.7, 3.8]
-        redis-version: [4, 5]
+        python-version: [3.6, 3.7, 3.8, 3.9]
+        redis-version: [4, 5, 6]
 
     steps:
       - uses: actions/checkout@v1
@@ -25,6 +25,11 @@ jobs:
         uses: supercharge/redis-github-action@1.1.0
         with:
           redis-version: ${{ matrix.redis-version }}
+      - name: Check format
+        run: |
+          black .
+          isort .
+          flake8 .
       - name: Test with pytest
         run: |
-          pytest --cov --cov-fail-under=100 -o log_cli=true -o log_cli_level=DEBUG
+          coverage run -m pytest --cov-fail-under=100 -o log_cli=true -o log_cli_level=DEBUG

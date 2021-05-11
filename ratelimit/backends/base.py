@@ -1,7 +1,7 @@
 import time
 from abc import ABC, abstractmethod
 from datetime import datetime, timedelta
-from typing import Dict, Sequence
+from typing import Dict, Sequence, Tuple
 
 from ..rule import FixedRule
 
@@ -77,7 +77,7 @@ class BaseBackend(ABC):
 
     async def allow_request(
         self, path: str, user: str, rule: FixedRule
-    ) -> tuple[bool, None]:
+    ) -> Tuple[bool, None]:
         if await self.is_blocking(user):
             return False, None
 

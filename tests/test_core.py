@@ -114,7 +114,7 @@ async def test_error_if_retry_after_set_incorrectly(
     backend, retry_after_enabled, retry_after_type, expectation
 ):
     with expectation:
-        rate_limit = RateLimitMiddleware(
+        RateLimitMiddleware(
             hello_world,
             auth_func,
             backend(),
@@ -122,4 +122,3 @@ async def test_error_if_retry_after_set_incorrectly(
             retry_after_enabled=retry_after_enabled,
             retry_after_type=retry_after_type,
         )
-        assert isinstance(rate_limit, backend)

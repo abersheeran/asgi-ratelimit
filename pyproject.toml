@@ -41,6 +41,9 @@ isort = "^5.8.0"
 
 [tool.coverage.run]
 omit = ["*/.venv/*", "*/tests/*"]
+branch = true
+command_line = "-m pytest"
+source = ["."]
 
 [tool.coverage.report]
 exclude_lines = [
@@ -53,6 +56,15 @@ exclude_lines = [
 ]
 show_missing = true
 skip_covered = true
+
+[tool.isort]
+profile = "black"
+combine_as_imports = true
+known_first_party = "asgi-ratelimit"
+verbose = false
+
+[tool.black]
+target-version = ['py37']
 
 [build-system]
 requires = ["poetry>=0.12"]
