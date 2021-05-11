@@ -1,5 +1,5 @@
-import pytest
 import jwt
+import pytest
 
 from ratelimit.auths import EmptyInformation
 from ratelimit.auths.jwt import create_jwt_auth

@@ -1,10 +1,10 @@
-import time
 import random
+import time
 
 import pytest
 
 from ratelimit.backends import BaseBackend
-from ratelimit.rule import FixedRule, RULENAMES
+from ratelimit.rule import RULENAMES, FixedRule
 
 
 @pytest.fixture

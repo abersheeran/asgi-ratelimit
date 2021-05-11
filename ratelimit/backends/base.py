@@ -1,7 +1,7 @@
 import time
 from abc import ABC, abstractmethod
 from datetime import datetime, timedelta
-from typing import Dict, Sequence, Union
+from typing import Dict, Sequence
 
 from ..rule import FixedRule
 

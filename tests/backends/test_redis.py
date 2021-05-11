@@ -6,11 +6,11 @@ import httpx
 import pytest
 from aredis import StrictRedis
 
-from ratelimit import RateLimitMiddleware, FixedRule
+from ratelimit import FixedRule, RateLimitMiddleware
 from ratelimit.auths import EmptyInformation
 from ratelimit.backends.redis import RedisBackend
 from ratelimit.backends.slidingredis import SlidingRedisBackend
-from ratelimit.rule import LimitFrequency, CustomRule
+from ratelimit.rule import CustomRule, LimitFrequency
 
 
 class TimeFilter(logging.Filter):

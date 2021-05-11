@@ -1,8 +1,9 @@
 from contextlib import suppress as do_not_raise
+
 import httpx
 import pytest
 
-from ratelimit import RateLimitMiddleware, FixedRule
+from ratelimit import FixedRule, RateLimitMiddleware
 from ratelimit.auths import EmptyInformation
 from ratelimit.backends.redis import RedisBackend
 from ratelimit.backends.slidingredis import SlidingRedisBackend
@@ -121,3 +122,4 @@ async def test_error_if_retry_after_set_incorrectly(
             retry_after_enabled=retry_after_enabled,
             retry_after_type=retry_after_type,
         )
+        assert isinstance(rate_limit, backend)

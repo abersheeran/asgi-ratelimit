@@ -6,7 +6,6 @@ from aredis import StrictRedis
 from ..rule import FixedRule
 from . import BaseBackend
 
-
 SLIDING_WINDOW_SCRIPT = """
 -- Set variables from arguments
 local now = tonumber(ARGV[1])
@@ -58,8 +57,8 @@ class SlidingRedisBackend(BaseBackend):
         args = [epoch, json.dumps(ruleset)]
         from tests.backends.test_redis import logger
 
-        quoted_args = [f"'{a}'" for a in args]
-        cli = f"redis-cli --ldb --eval /tmp/script.lua {' '.join(keys)} , {' '.join(quoted_args)}"
+        # quoted_args = [f"'{a}'" for a in args]
+        # cli = f"redis-cli --ldb --eval /tmp/script.lua {' '.join(keys)} , {' '.join(quoted_args)}"
         # logger.debug(cli)
         r = await self.sliding_function.execute(keys=keys, args=args)
         mr = json.loads(r.decode())

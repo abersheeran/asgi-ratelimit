@@ -3,7 +3,7 @@ import time
 from aredis import StrictRedis
 from aredis.pipeline import StrictPipeline, WatchError
 
-from ..rule import FixedRule, RULENAMES
+from ..rule import RULENAMES, FixedRule
 from . import BaseBackend
 
 DECREASE_SCRIPT = """

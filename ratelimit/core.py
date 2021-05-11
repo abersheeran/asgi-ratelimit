@@ -1,13 +1,15 @@
-import dataclasses
-import functools
 import re
-from datetime import datetime
-from typing import Dict, Sequence, Tuple, Callable, Awaitable, Optional, Union, Literal
+from typing import Awaitable, Callable, Dict, Optional, Sequence, Tuple
 
-from .backends.slidingredis import SlidingRedisBackend
-from .types import ASGIApp, Scope, Receive, Send, Message
+try:
+    from typing import Literal
+except ImportError:
+    from typing_extensions import Literal
+
 from .backends import BaseBackend
-from .rule import FixedRule, RULENAMES, CustomRule
+from .backends.slidingredis import SlidingRedisBackend
+from .rule import RULENAMES, CustomRule, FixedRule
+from .types import ASGIApp, Receive, Scope, Send
 
 
 async def default_429(scope: Scope, receive: Receive, send: Send) -> None:
@@ -45,7 +47,7 @@ class RateLimitMiddleware:
         self.on_blocked = on_blocked
         self.retry_after_enabled = retry_after_enabled
         self.retry_after_type = retry_after_type
-        if self.retry_after_enabled and not self.retry_after_type in [
+        if self.retry_after_enabled and self.retry_after_type not in [
             "seconds",
             "httpdate",
         ]:
