@@ -80,11 +80,20 @@ async def auth_func(scope):
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("redisbackend", [SlidingRedisBackend, RedisBackend])
 @pytest.mark.parametrize(
-    "retry_after_param",
-    [(False, None), (True, "seconds"), (True, "httpdate")],
-    ids=["retry-after not set", "retry-after in seconds", "retry-after as a http date"],
+    "redisbackend, retry_after_param",
+    [
+        (RedisBackend, (False, None)),
+        (SlidingRedisBackend, (False, None)),
+        (SlidingRedisBackend, (True, "seconds")),
+        (SlidingRedisBackend, (True, "httpdate")),
+    ],
+    ids=[
+        "retry-after not set RedisBakend",
+        "retry-after not set SlidingRedisBakend",
+        "retry-after in seconds",
+        "retry-after as a http date",
+    ],
 )
 async def test_redis(redisbackend, retry_after_param):
     await StrictRedis().flushdb()

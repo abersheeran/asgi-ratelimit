@@ -12,7 +12,9 @@ from .rule import FixedRule, RULENAMES, CustomRule
 
 async def default_429(scope: Scope, receive: Receive, send: Send) -> None:
 
-    await send({"type": "http.response.start", "status": 429, "headers": scope["headers"]})
+    await send(
+        {"type": "http.response.start", "status": 429, "headers": scope["headers"]}
+    )
     await send({"type": "http.response.body", "body": b"", "more_body": False})
 
 
@@ -50,6 +52,10 @@ class RateLimitMiddleware:
             raise ValueError(
                 "retry_after_type must be set to either 'seconds' or 'httpdate' if retry_after_enabled is True"
             )
+        if self.retry_after_enabled and not isinstance(
+            self.backend, SlidingRedisBackend
+        ):
+            raise ValueError("retry-after implemented on SlidingRedisBackend only")
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         if scope["type"] != "http":  # pragma: no cover
@@ -84,8 +90,6 @@ class RateLimitMiddleware:
             )
         elif isinstance(rule, CustomRule):
             has_rule = True
-        else:
-            has_rule = False
 
         if self.retry_after_enabled and isinstance(self.backend, SlidingRedisBackend):
             allow, limits = await self.backend.allow_request(url_path, user, rule)
@@ -93,7 +97,9 @@ class RateLimitMiddleware:
                 return await self.app(scope, receive, send)
             else:
                 rah = str(limits["expire_in"][0]).encode()
-                return await self.retry_after_response(scope, receive, send, retry_after_header=rah)
+                return await self.retry_after_response(
+                    scope, receive, send, retry_after_header=rah
+                )
         else:
             allow, limits = await self.backend.allow_request(url_path, user, rule)
             if not has_rule or allow:

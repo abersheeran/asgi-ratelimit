@@ -1,9 +1,11 @@
+from contextlib import suppress as do_not_raise
 import httpx
 import pytest
 
 from ratelimit import RateLimitMiddleware, FixedRule
 from ratelimit.auths import EmptyInformation
 from ratelimit.backends.redis import RedisBackend
+from ratelimit.backends.slidingredis import SlidingRedisBackend
 
 
 async def hello_world(scope, receive, send):
@@ -93,30 +95,29 @@ async def test_on_auth_error_with_handler():
 
 
 @pytest.mark.asyncio
-async def test_error_if_retry_after_set_incorrectly():
-    with pytest.raises(ValueError):
-        rate_limit = RateLimitMiddleware(
-            hello_world, auth_func, RedisBackend(), {}, retry_after_enabled=True
-        )
-    with pytest.raises(ValueError):
+@pytest.mark.parametrize(
+    "backend, retry_after_enabled, retry_after_type, expectation",
+    [
+        (RedisBackend, True, None, pytest.raises(ValueError)),
+        (RedisBackend, True, "seconds", pytest.raises(ValueError)),
+        (RedisBackend, True, "httpdate", pytest.raises(ValueError)),
+        (RedisBackend, False, None, do_not_raise()),
+        (SlidingRedisBackend, False, None, do_not_raise()),
+        (SlidingRedisBackend, True, None, pytest.raises(ValueError)),
+        (SlidingRedisBackend, True, "seconds", do_not_raise()),
+        (SlidingRedisBackend, True, "httpdate", do_not_raise()),
+        (SlidingRedisBackend, True, "no", pytest.raises(ValueError)),
+    ],
+)
+async def test_error_if_retry_after_set_incorrectly(
+    backend, retry_after_enabled, retry_after_type, expectation
+):
+    with expectation:
         rate_limit = RateLimitMiddleware(
             hello_world,
             auth_func,
-            RedisBackend(),
+            backend(),
             {},
-            retry_after_enabled=True,
-            retry_after_type="not_available_value",
+            retry_after_enabled=retry_after_enabled,
+            retry_after_type=retry_after_type,
         )
-
-
-@pytest.mark.parametrize("retry_after_type", ["seconds", "httpdate"])
-@pytest.mark.asyncio
-async def test_no_error_if_retry_after_set_correctly(retry_after_type):
-    rate_limit = RateLimitMiddleware(
-        hello_world,
-        auth_func,
-        RedisBackend(),
-        {},
-        retry_after_enabled=True,
-        retry_after_type=retry_after_type,
-    )

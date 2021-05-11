@@ -75,7 +75,9 @@ class BaseBackend(ABC):
     async def is_blocking(self, user: str) -> bool:
         raise NotImplementedError()
 
-    async def allow_request(self, path: str, user: str, rule: FixedRule) -> tuple[bool, None]:
+    async def allow_request(
+        self, path: str, user: str, rule: FixedRule
+    ) -> tuple[bool, None]:
         if await self.is_blocking(user):
             return False, None
 

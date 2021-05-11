@@ -82,7 +82,7 @@ class SlidingRedisBackend(BaseBackend):
 
     async def allow_request(self, path: str, user: str, rule: FixedRule) -> bool:
         if await self.is_blocking(user):
-            return False, None
+            return False, {"expire_in": [rule.block_time]}
 
         limits = await self.get_limits(path, user, rule)
         allow = all(limits["scores"])
