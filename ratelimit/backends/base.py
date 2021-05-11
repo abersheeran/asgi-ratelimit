@@ -1,7 +1,7 @@
 import time
 from abc import ABC, abstractmethod
 from datetime import datetime, timedelta
-from typing import Dict, Sequence
+from typing import Dict, Sequence, Union
 
 from ..rule import FixedRule
 
@@ -75,9 +75,9 @@ class BaseBackend(ABC):
     async def is_blocking(self, user: str) -> bool:
         raise NotImplementedError()
 
-    async def allow_request(self, path: str, user: str, rule: FixedRule) -> bool:
+    async def allow_request(self, path: str, user: str, rule: FixedRule) -> tuple[bool, None]:
         if await self.is_blocking(user):
-            return False
+            return False, None
 
         updated = await self.increase_limit(path, user, rule)
         allow = updated or await self.decrease_limit(path, user, rule)
@@ -85,4 +85,4 @@ class BaseBackend(ABC):
         if not allow and rule.block_time:
             await self.set_block_time(user, rule.block_time)
 
-        return allow
+        return allow, None

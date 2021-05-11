@@ -66,7 +66,7 @@ class SlidingRedisBackend(BaseBackend):
         logger.debug("\n")
         logger.debug(mr)
         # logger.debug(f"{epoch} {mr['scores']}:{all(r)}")
-        return all(mr["scores"])
+        return mr
 
     async def decrease_limit(self, path: str, user: str, rule: FixedRule) -> bool:
         raise NotImplementedError()
@@ -82,11 +82,12 @@ class SlidingRedisBackend(BaseBackend):
 
     async def allow_request(self, path: str, user: str, rule: FixedRule) -> bool:
         if await self.is_blocking(user):
-            return False
+            return False, None
 
-        allow = await self.get_limits(path, user, rule)
+        limits = await self.get_limits(path, user, rule)
+        allow = all(limits["scores"])
 
         if not allow and rule.block_time:
             await self.set_block_time(user, rule.block_time)
 
-        return allow
+        return allow, limits

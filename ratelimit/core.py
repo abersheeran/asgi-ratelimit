@@ -1,15 +1,18 @@
 import dataclasses
+import functools
 import re
 from datetime import datetime
 from typing import Dict, Sequence, Tuple, Callable, Awaitable, Optional, Union, Literal
 
-from .types import ASGIApp, Scope, Receive, Send
+from .backends.slidingredis import SlidingRedisBackend
+from .types import ASGIApp, Scope, Receive, Send, Message
 from .backends import BaseBackend
 from .rule import FixedRule, RULENAMES, CustomRule
 
 
 async def default_429(scope: Scope, receive: Receive, send: Send) -> None:
-    await send({"type": "http.response.start", "status": 429})
+
+    await send({"type": "http.response.start", "status": 429, "headers": scope["headers"]})
     await send({"type": "http.response.body", "body": b"", "more_body": False})
 
 
@@ -84,10 +87,21 @@ class RateLimitMiddleware:
         else:
             has_rule = False
 
-        if self.retry_after_enabled:
-            pass
+        if self.retry_after_enabled and isinstance(self.backend, SlidingRedisBackend):
+            allow, limits = await self.backend.allow_request(url_path, user, rule)
+            if not has_rule or allow:
+                return await self.app(scope, receive, send)
+            else:
+                rah = str(limits["expire_in"][0]).encode()
+                return await self.retry_after_response(scope, receive, send, retry_after_header=rah)
         else:
-            if not has_rule or await self.backend.allow_request(url_path, user, rule):
+            allow, limits = await self.backend.allow_request(url_path, user, rule)
+            if not has_rule or allow:
                 return await self.app(scope, receive, send)
 
         return await self.on_blocked(scope, receive, send)
+
+    async def retry_after_response(self, scope, receive, send, retry_after_header):
+        headers = scope["headers"]
+        headers.append((b"retry-after", retry_after_header))
+        await self.on_blocked(scope, receive, send)
