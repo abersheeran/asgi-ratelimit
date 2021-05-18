@@ -1,9 +1,15 @@
+import sys
 import time
 from abc import ABC, abstractmethod
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Tuple, TypedDict
+from typing import Dict, List, Optional, Tuple
 
 from ..rule import FixedRule
+
+if sys.version_info >= (3, 8):  # pragma: no cover
+    from typing import TypedDict
+else:
+    from typing_extensions import TypedDict  # pragma: no cover
 
 
 class RedisResult(TypedDict):
