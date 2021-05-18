@@ -3,10 +3,10 @@ import sys
 from datetime import datetime
 from typing import Awaitable, Callable, Dict, Optional, Sequence, Tuple, Union
 
-if sys.version_info >= (3, 8):  # pragma: nocover
+if sys.version_info >= (3, 8):  # pragma: no cover
     from typing import Literal
 else:
-    from typing_extensions import Literal  # pragma: nocover
+    from typing_extensions import Literal  # pragma: no cover
 
 
 from .backends import BaseBackend
