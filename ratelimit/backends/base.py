@@ -1,10 +1,15 @@
 import time
 from abc import ABC, abstractmethod
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, TypedDict
 
 from ..rule import FixedRule
-from .slidingredis import RedisResult
+
+
+class RedisResult(TypedDict):
+    scores: List[int]
+    expire_in: List[int]
+    epoch: float
 
 
 class BaseBackend(ABC):

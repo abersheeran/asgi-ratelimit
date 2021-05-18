@@ -1,11 +1,12 @@
 import json
 import time
-from typing import List, Tuple, TypedDict, Union
+from typing import Tuple, Union
 
 from aredis import StrictRedis
 
 from ..rule import CustomRule, FixedRule
 from . import BaseBackend
+from .base import RedisResult
 
 SLIDING_WINDOW_SCRIPT = """
 -- Set variables from arguments
@@ -38,12 +39,6 @@ result['scores'] = scores
 result['expire_in'] = expire_in
 return cjson.encode(result)
 """
-
-
-class RedisResult(TypedDict):
-    scores: List[int]
-    expire_in: List[int]
-    epoch: float
 
 
 class SlidingRedisBackend(BaseBackend):

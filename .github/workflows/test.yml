@@ -32,4 +32,5 @@ jobs:
           flake8 .
       - name: Test with pytest
         run: |
-          coverage run -m pytest --cov-fail-under=100 -o log_cli=true -o log_cli_level=DEBUG
+          coverage run -m pytest --log-cli-level=DEBUG
+          coverage report --fail-under=100

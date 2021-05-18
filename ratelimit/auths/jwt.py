@@ -1,12 +1,7 @@
-from typing import TYPE_CHECKING, Awaitable, Callable, List, Optional, Tuple, Union
+from typing import Awaitable, Callable, List, Optional, Tuple, Union
 
 import jwt
-
-if TYPE_CHECKING:
-    from cryptography.hazmat.primitives.asymmetric.rsa import (
-        RSAPrivateKey,
-        RSAPublicKey,
-    )
+from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey, RSAPublicKey
 
 from ..types import Scope
 from . import EmptyInformation
