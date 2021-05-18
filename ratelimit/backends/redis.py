@@ -27,8 +27,9 @@ class RedisBackend(BaseBackend):
         port: int = 6379,
         db: int = 0,
         password: str = None,
+        ssl: bool = False,
     ) -> None:
-        self._redis = StrictRedis(host=host, port=port, db=db, password=password)
+        self._redis = StrictRedis(host=host, port=port, db=db, password=password, ssl=ssl)
         self.decrease_function = self._redis.register_script(DECREASE_SCRIPT)
 
     async def increase_limit(self, path: str, user: str, rule: FixedRule) -> bool:
