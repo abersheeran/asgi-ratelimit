@@ -123,6 +123,6 @@ class RateLimitMiddleware:
             header_value = dt_value.strftime("%a, %d %b %Y %H:%M:%S UTC").encode()
         elif self.retry_after_type == "delay-seconds":
             header_value = str(int(limit) + 1).encode()
-        else:
+        else:  # pragma: no cover
             raise ValueError()
         return header_value
