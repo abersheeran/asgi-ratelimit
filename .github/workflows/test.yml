@@ -27,7 +27,7 @@ jobs:
           redis-version: ${{ matrix.redis-version }}
       - name: Check format
         run: |
-          black --check .
+          black --check --diff .
           isort --check .
           flake8 .
       - name: Test with pytest
