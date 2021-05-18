@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import List, Optional, Tuple, Dict
+from typing import Dict, List, Optional, Tuple
 
 WINDOW_SIZE = {
     "second": 1,

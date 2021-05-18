@@ -4,7 +4,7 @@ from typing import List, Tuple, TypedDict, Union
 
 from aredis import StrictRedis
 
-from ..rule import FixedRule
+from ..rule import CustomRule, FixedRule
 from . import BaseBackend
 
 SLIDING_WINDOW_SCRIPT = """
@@ -42,7 +42,7 @@ return cjson.encode(result)
 
 class RedisResult(TypedDict):
     scores: List[int]
-    expire_in: List[Union[float, int]]
+    expire_in: List[int]
     epoch: float
 
 
@@ -57,7 +57,9 @@ class SlidingRedisBackend(BaseBackend):
         self._redis = StrictRedis(host=host, port=port, db=db, password=password)
         self.sliding_function = self._redis.register_script(SLIDING_WINDOW_SCRIPT)
 
-    async def get_limits(self, path: str, user: str, rule: FixedRule) -> RedisResult:
+    async def get_limits(
+        self, path: str, user: str, rule: Union[FixedRule, CustomRule]
+    ) -> RedisResult:
         epoch = time.time()
         ruleset = rule.ruleset(path, user)
         keys = list(ruleset.keys())
@@ -78,7 +80,9 @@ class SlidingRedisBackend(BaseBackend):
         # logger.debug(f"{epoch} {mr['scores']}:{all(r)}")
         return mr
 
-    async def decrease_limit(self, path: str, user: str, rule: FixedRule) -> bool:
+    async def decrease_limit(
+        self, path: str, user: str, rule: Union[FixedRule, CustomRule]
+    ) -> bool:
         raise NotImplementedError()
 
     async def increase_limit(self, path: str, user: str, rule: FixedRule) -> bool:
@@ -94,9 +98,10 @@ class SlidingRedisBackend(BaseBackend):
         self, path: str, user: str, rule: FixedRule
     ) -> Tuple[bool, RedisResult]:
         if await self.is_blocking(user):
+            assert rule.block_time
             return False, {
                 "expire_in": [rule.block_time],
-                "scores": None,
+                "scores": [],
                 "epoch": time.time(),
             }
 

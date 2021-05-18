@@ -1,11 +1,13 @@
 import re
+import sys
 from datetime import datetime
-from typing import Awaitable, Callable, Dict, Optional, Sequence, Tuple
+from typing import Awaitable, Callable, Dict, Optional, Sequence, Tuple, Union
 
-try:
+if sys.version_info >= (3, 8):
     from typing import Literal
-except ImportError:
+else:
     from typing_extensions import Literal
+
 
 from .backends import BaseBackend
 from .backends.slidingredis import SlidingRedisBackend
@@ -31,17 +33,17 @@ class RateLimitMiddleware:
         app: ASGIApp,
         authenticate: Callable[[Scope], Awaitable[Tuple[str, str]]],
         backend: BaseBackend,
-        config: Dict[str, Sequence[FixedRule]],
+        config: Dict[str, Sequence[Union[FixedRule, CustomRule]]],
         *,
         on_auth_error: Optional[Callable[[Exception], Awaitable[ASGIApp]]] = None,
         on_blocked: ASGIApp = default_429,
         retry_after_enabled: bool = False,
-        retry_after_type: Optional[Literal["seconds", "httpdate"]] = None,
+        retry_after_type: Optional[Literal["delay-seconds", "http-date"]] = None,
     ) -> None:
         self.app = app
         self.authenticate = authenticate
         self.backend = backend
-        self.config: Dict[re.Pattern, Sequence[FixedRule]] = {
+        self.config: Dict[re.Pattern, Sequence[Union[FixedRule, CustomRule]]] = {
             re.compile(path): value for path, value in config.items()
         }
         self.on_auth_error = on_auth_error
@@ -110,7 +112,9 @@ class RateLimitMiddleware:
 
         return await self.on_blocked(scope, receive, send)
 
-    async def retry_after_response(self, scope, receive, send, retry_after_header):
+    async def retry_after_response(
+        self, scope: Scope, receive: Receive, send: Send, retry_after_header: bytes
+    ) -> None:
         headers = scope["headers"]
         headers.append((b"retry-after", retry_after_header))
         await self.on_blocked(scope, receive, send)

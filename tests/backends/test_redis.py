@@ -16,7 +16,7 @@ from ratelimit.rule import CustomRule, LimitFrequency
 class TimeFilter(logging.Filter):
     def filter(self, record):
         try:
-            last = self.last
+            last: int = self.last  # type: ignore [has-type]
         except AttributeError:
             last = record.relativeCreated
         delta = datetime.datetime.fromtimestamp(
@@ -28,7 +28,7 @@ class TimeFilter(logging.Filter):
         self.last = record.relativeCreated
 
         try:
-            first = self.first
+            first: int = self.first  # type: ignore [has-type]
         except AttributeError:
             first = record.created
             self.first = record.created

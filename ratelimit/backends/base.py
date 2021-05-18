@@ -1,9 +1,10 @@
 import time
 from abc import ABC, abstractmethod
 from datetime import datetime, timedelta
-from typing import Dict, Sequence, Tuple
+from typing import Dict, List, Optional, Tuple
 
 from ..rule import FixedRule
+from .slidingredis import RedisResult
 
 
 class BaseBackend(ABC):
@@ -13,7 +14,7 @@ class BaseBackend(ABC):
 
     @staticmethod
     def calc_incr_value(
-        last_timestamps: Sequence[float], rule: FixedRule
+        last_timestamps: List[Optional[float]], rule: FixedRule
     ) -> Dict[str, Dict[str, int]]:
 
         now_timestamp = time.time()
@@ -77,7 +78,7 @@ class BaseBackend(ABC):
 
     async def allow_request(
         self, path: str, user: str, rule: FixedRule
-    ) -> Tuple[bool, None]:
+    ) -> Tuple[bool, Optional[RedisResult]]:
         if await self.is_blocking(user):
             return False, None
 
