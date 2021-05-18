@@ -29,6 +29,7 @@ async def test_client_ip(scope, real_ip):
     "scope",
     [
         {"client": ("127.0.0.1", 8000), "headers": ((b"host", b"example.com"),)},
+        {"client": None, "headers": ((b"host", b"example.com"),)},
         {"client": ("172.18.81.1", 8000), "headers": tuple()},
     ],
 )

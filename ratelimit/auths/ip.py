@@ -14,6 +14,8 @@ async def client_ip(scope: Scope) -> Tuple[str, str]:
         ip, port = tuple(scope["client"])
         if ip_address(ip).is_global:
             real_ip = ip
+    else:
+        raise EmptyInformation(scope)
 
     for name, value in scope["headers"]:  # type: bytes, bytes
         if name == b"x-real-ip":
