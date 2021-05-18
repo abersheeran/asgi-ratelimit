@@ -49,8 +49,9 @@ formatter = logging.Formatter(
     fmt="Total:%(relativestart)s (+%(relative)s) - %(name)s - %(levelname)s - %(message)s"
 )
 logger.addHandler(ch)
-[hndl.addFilter(TimeFilter()) for hndl in logger.handlers]
-[hndl.setFormatter(formatter) for hndl in logger.handlers]
+for hndl in logger.handlers:
+    hndl.addFilter(TimeFilter())
+    hndl.setFormatter(formatter)
 
 
 async def hello_world(scope, receive, send):
