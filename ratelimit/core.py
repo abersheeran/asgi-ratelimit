@@ -72,14 +72,13 @@ class RateLimitMiddleware:
             if pattern.match(url_path):
                 # After finding the first rule that can match the path,
                 # calculate the user ID and group
-                if user is None and group is None:
-                    try:
-                        user, group = await self.authenticate(scope)
-                    except Exception as exc:
-                        if self.on_auth_error is not None:
-                            reponse = await self.on_auth_error(exc)
-                            return await reponse(scope, receive, send)
-                        raise exc
+                try:
+                    user, group = await self.authenticate(scope)
+                except Exception as exc:
+                    if self.on_auth_error is not None:
+                        reponse = await self.on_auth_error(exc)
+                        return await reponse(scope, receive, send)
+                    raise exc
 
                 # Select the first rule that can be matched
                 _rules = [rule for rule in rules if group == rule.group]
@@ -95,6 +94,8 @@ class RateLimitMiddleware:
             )
         elif isinstance(rule, CustomRule):
             has_rule = True
+        else:
+            has_rule = False
 
         if self.retry_after_enabled and isinstance(self.backend, SlidingRedisBackend):
             allow, limits = await self.backend.allow_request(url_path, user, rule)
