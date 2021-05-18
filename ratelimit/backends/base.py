@@ -44,15 +44,23 @@ class BaseBackend(ABC):
                 incr_dict["minute"] = {"value": rule.minute - 1, "ttl": 60 + 1}
 
         if rule.hour is not None:
-            if last_timestamps[2] is None or datetime.utcfromtimestamp(  # pragma: no cover
+            if last_timestamps[
+                2
+            ] is None or datetime.utcfromtimestamp(  # pragma: no cover
                 last_timestamps[2]
-            ) <= now - timedelta(hours=1):
+            ) <= now - timedelta(
+                hours=1
+            ):
                 incr_dict["hour"] = {"value": rule.hour - 1, "ttl": 60 * 60 + 1}
 
         if rule.day is not None:
-            if last_timestamps[3] is None or datetime.utcfromtimestamp(  # pragma: no cover
+            if last_timestamps[
+                3
+            ] is None or datetime.utcfromtimestamp(  # pragma: no cover
                 last_timestamps[3]
-            ) <= now - timedelta(days=1):
+            ) <= now - timedelta(
+                days=1
+            ):
                 incr_dict["day"] = {"value": rule.day - 1, "ttl": 60 * 60 * 24 + 1}
 
         if rule.month is not None:
@@ -63,7 +71,9 @@ class BaseBackend(ABC):
                 }
             else:
                 _last_time = datetime.utcfromtimestamp(last_timestamps[4])
-                if _last_time.year < now.year or _last_time.month < now.month:  # pragma: no cover
+                if (
+                    _last_time.year < now.year or _last_time.month < now.month
+                ):  # pragma: no cover
                     incr_dict["month"] = {
                         "value": rule.month - 1,
                         "ttl": 60 * 60 * 24 * 31 + 1,
