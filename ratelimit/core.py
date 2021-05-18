@@ -1,4 +1,5 @@
 import re
+from datetime import datetime
 from typing import Awaitable, Callable, Dict, Optional, Sequence, Tuple
 
 try:
@@ -48,11 +49,11 @@ class RateLimitMiddleware:
         self.retry_after_enabled = retry_after_enabled
         self.retry_after_type = retry_after_type
         if self.retry_after_enabled and self.retry_after_type not in [
-            "seconds",
-            "httpdate",
+            "delay-seconds",
+            "http-date",
         ]:
             raise ValueError(
-                "retry_after_type must be set to either 'seconds' or 'httpdate' if retry_after_enabled is True"
+                "retry_after_type must be set to either 'delay-seconds' or 'http-date' if retry_after_enabled is True"
             )
         if self.retry_after_enabled and not isinstance(
             self.backend, SlidingRedisBackend
@@ -98,7 +99,7 @@ class RateLimitMiddleware:
             if not has_rule or allow:
                 return await self.app(scope, receive, send)
             else:
-                rah = str(limits["expire_in"][0]).encode()
+                rah = self.limit_to_header(limits["epoch"], max(limits["expire_in"]))
                 return await self.retry_after_response(
                     scope, receive, send, retry_after_header=rah
                 )
@@ -113,3 +114,13 @@ class RateLimitMiddleware:
         headers = scope["headers"]
         headers.append((b"retry-after", retry_after_header))
         await self.on_blocked(scope, receive, send)
+
+    def limit_to_header(self, epoch: float, limit: float) -> bytes:
+        if self.retry_after_type == "http-date":
+            dt_value = datetime.utcfromtimestamp(epoch + limit)
+            header_value = dt_value.strftime("%a, %d %b %Y %H:%M:%S UTC").encode()
+        elif self.retry_after_type == "delay-seconds":
+            header_value = str(int(limit) + 1).encode()
+        else:
+            raise ValueError()
+        return header_value

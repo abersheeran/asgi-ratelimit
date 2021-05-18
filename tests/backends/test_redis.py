@@ -81,12 +81,12 @@ async def auth_func(scope):
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    "redisbackend, retry_after_param",
+    "redisbackend, retry_after_enabled, retry_after_type",
     [
-        (RedisBackend, (False, None)),
-        (SlidingRedisBackend, (False, None)),
-        (SlidingRedisBackend, (True, "seconds")),
-        (SlidingRedisBackend, (True, "httpdate")),
+        (RedisBackend, False, None),
+        (SlidingRedisBackend, False, None),
+        (SlidingRedisBackend, True, "delay-seconds"),
+        (SlidingRedisBackend, True, "http-date"),
     ],
     ids=[
         "retry-after not set RedisBakend",
@@ -95,7 +95,7 @@ async def auth_func(scope):
         "retry-after as a http date",
     ],
 )
-async def test_redis(redisbackend, retry_after_param):
+async def test_redis(redisbackend, retry_after_enabled, retry_after_type):
     await StrictRedis().flushdb()
     rate_limit = RateLimitMiddleware(
         hello_world,
@@ -106,8 +106,8 @@ async def test_redis(redisbackend, retry_after_param):
             r"/minute.*": [FixedRule(minute=1), FixedRule(group="admin")],
             r"/block": [FixedRule(second=1, block_time=5)],
         },
-        retry_after_enabled=retry_after_param[0],
-        retry_after_type=retry_after_param[1],
+        retry_after_enabled=retry_after_enabled,
+        retry_after_type=retry_after_type,
     )
     async with httpx.AsyncClient(
         app=rate_limit, base_url="http://testserver"
@@ -124,6 +124,8 @@ async def test_redis(redisbackend, retry_after_param):
             "/second_limit", headers={"user": "user", "group": "default"}
         )
         assert response.status_code == 429
+        if retry_after_enabled:
+            assert "retry-after" in response.headers
 
         response = await client.get(
             "/second_limit", headers={"user": "admin-user", "group": "admin"}
@@ -146,6 +148,8 @@ async def test_redis(redisbackend, retry_after_param):
             "/minute_limit", headers={"user": "user", "group": "default"}
         )
         assert response.status_code == 429
+        if retry_after_enabled:
+            assert "retry-after" in response.headers
 
         response = await client.get(
             "/minute_limit", headers={"user": "admin-user", "group": "admin"}
@@ -161,6 +165,8 @@ async def test_redis(redisbackend, retry_after_param):
             "/block", headers={"user": "user", "group": "default"}
         )
         assert response.status_code == 429
+        if retry_after_enabled:
+            assert "retry-after" in response.headers
 
         await asyncio.sleep(1)
 
@@ -168,11 +174,15 @@ async def test_redis(redisbackend, retry_after_param):
             "/block", headers={"user": "user", "group": "default"}
         )
         assert response.status_code == 429
+        if retry_after_enabled:
+            assert "retry-after" in response.headers
 
         response = await client.get(
             "/block", headers={"user": "user", "group": "default"}
         )
         assert response.status_code == 429
+        if retry_after_enabled:
+            assert "retry-after" in response.headers
 
         await asyncio.sleep(4)
 
@@ -185,11 +195,11 @@ async def test_redis(redisbackend, retry_after_param):
 @pytest.mark.asyncio
 @pytest.mark.parametrize("redisbackend", [SlidingRedisBackend])
 @pytest.mark.parametrize(
-    "retry_after_param",
-    [(False, None), (True, "seconds"), (True, "httpdate")],
+    "retry_after_enabled, retry_after_type",
+    [(False, None), (True, "delay-seconds"), (True, "http-date")],
     ids=["retry-after not set", "retry-after in seconds", "retry-after as a http date"],
 )
-async def test_multiple(redisbackend, retry_after_param):
+async def test_multiple(redisbackend, retry_after_enabled, retry_after_type):
     await StrictRedis().flushdb()
     rate_limit = RateLimitMiddleware(
         hello_world,
@@ -207,8 +217,8 @@ async def test_multiple(redisbackend, retry_after_param):
                 )
             ],
         },
-        retry_after_enabled=retry_after_param[0],
-        retry_after_type=retry_after_param[1],
+        retry_after_enabled=retry_after_enabled,
+        retry_after_type=retry_after_type,
     )
     async with httpx.AsyncClient(
         app=rate_limit, base_url="http://testserver"
@@ -225,6 +235,8 @@ async def test_multiple(redisbackend, retry_after_param):
             "/multiple", headers={"user": "user", "group": "default"}
         )
         assert response.status_code == 429
+        if retry_after_enabled:
+            assert "retry-after" in response.headers
         await asyncio.sleep(1)
         # 0+1 2-1 = 1 1
         response = await client.get(
@@ -236,12 +248,16 @@ async def test_multiple(redisbackend, retry_after_param):
             "/multiple", headers={"user": "user", "group": "default"}
         )
         assert response.status_code == 429
+        if retry_after_enabled:
+            assert "retry-after" in response.headers
         await asyncio.sleep(2)
         # 0+1 0+0 = 1 0
         response = await client.get(
             "/multiple", headers={"user": "user", "group": "default"}
         )
         assert response.status_code == 429
+        if retry_after_enabled:
+            assert "retry-after" in response.headers
 
         # 3 times every 2s
         response = await client.get(
@@ -260,16 +276,22 @@ async def test_multiple(redisbackend, retry_after_param):
             "/custom", headers={"user": "user", "group": "default"}
         )
         assert response.status_code == 429
+        if retry_after_enabled:
+            assert "retry-after" in response.headers
         await asyncio.sleep(1)
         response = await client.get(
             "/custom", headers={"user": "user", "group": "default"}
         )
         assert response.status_code == 429
+        if retry_after_enabled:
+            assert "retry-after" in response.headers
         await asyncio.sleep(0.9)
         response = await client.get(
             "/custom", headers={"user": "user", "group": "default"}
         )
         assert response.status_code == 429
+        if retry_after_enabled:
+            assert "retry-after" in response.headers
         await asyncio.sleep(0.1)
         response = await client.get(
             "/custom", headers={"user": "user", "group": "default"}
@@ -293,6 +315,8 @@ async def test_multiple(redisbackend, retry_after_param):
             "/multiple_custom", headers={"user": "user", "group": "default"}
         )
         assert response.status_code == 429
+        if retry_after_enabled:
+            assert "retry-after" in response.headers
         # reset the 2s limit, we're at 4 hits
         await asyncio.sleep(2)
         response = await client.get(
@@ -313,3 +337,5 @@ async def test_multiple(redisbackend, retry_after_param):
             "/multiple_custom", headers={"user": "user", "group": "default"}
         )
         assert response.status_code == 429
+        if retry_after_enabled:
+            assert "retry-after" in response.headers

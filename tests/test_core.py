@@ -100,13 +100,13 @@ async def test_on_auth_error_with_handler():
     "backend, retry_after_enabled, retry_after_type, expectation",
     [
         (RedisBackend, True, None, pytest.raises(ValueError)),
-        (RedisBackend, True, "seconds", pytest.raises(ValueError)),
-        (RedisBackend, True, "httpdate", pytest.raises(ValueError)),
+        (RedisBackend, True, "delay-seconds", pytest.raises(ValueError)),
+        (RedisBackend, True, "http-date", pytest.raises(ValueError)),
         (RedisBackend, False, None, do_not_raise()),
         (SlidingRedisBackend, False, None, do_not_raise()),
         (SlidingRedisBackend, True, None, pytest.raises(ValueError)),
-        (SlidingRedisBackend, True, "seconds", do_not_raise()),
-        (SlidingRedisBackend, True, "httpdate", do_not_raise()),
+        (SlidingRedisBackend, True, "delay-seconds", do_not_raise()),
+        (SlidingRedisBackend, True, "http-date", do_not_raise()),
         (SlidingRedisBackend, True, "no", pytest.raises(ValueError)),
     ],
 )

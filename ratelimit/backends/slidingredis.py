@@ -1,5 +1,6 @@
 import json
 import time
+from typing import List, Tuple, TypedDict, Union
 
 from aredis import StrictRedis
 
@@ -39,6 +40,12 @@ return cjson.encode(result)
 """
 
 
+class RedisResult(TypedDict):
+    scores: List[int]
+    expire_in: List[Union[float, int]]
+    epoch: float
+
+
 class SlidingRedisBackend(BaseBackend):
     def __init__(
         self,
@@ -50,7 +57,7 @@ class SlidingRedisBackend(BaseBackend):
         self._redis = StrictRedis(host=host, port=port, db=db, password=password)
         self.sliding_function = self._redis.register_script(SLIDING_WINDOW_SCRIPT)
 
-    async def get_limits(self, path: str, user: str, rule: FixedRule) -> bool:
+    async def get_limits(self, path: str, user: str, rule: FixedRule) -> RedisResult:
         epoch = time.time()
         ruleset = rule.ruleset(path, user)
         keys = list(ruleset.keys())
@@ -62,6 +69,10 @@ class SlidingRedisBackend(BaseBackend):
         # logger.debug(cli)
         r = await self.sliding_function.execute(keys=keys, args=args)
         mr = json.loads(r.decode())
+        # we need that in case redis returns no values for a given key, "scores" or "expire_in"
+        # if that is the case the corresponding value will be {} and we transform it to []
+        mr = {k: (v if v != {} else []) for k, v in mr.items()}
+        mr["epoch"] = epoch
         logger.debug("\n")
         logger.debug(mr)
         # logger.debug(f"{epoch} {mr['scores']}:{all(r)}")
@@ -79,9 +90,15 @@ class SlidingRedisBackend(BaseBackend):
     async def is_blocking(self, user: str) -> bool:
         return bool(await self._redis.get(f"blocking:{user}"))
 
-    async def allow_request(self, path: str, user: str, rule: FixedRule) -> bool:
+    async def allow_request(
+        self, path: str, user: str, rule: FixedRule
+    ) -> Tuple[bool, RedisResult]:
         if await self.is_blocking(user):
-            return False, {"expire_in": [rule.block_time]}
+            return False, {
+                "expire_in": [rule.block_time],
+                "scores": None,
+                "epoch": time.time(),
+            }
 
         limits = await self.get_limits(path, user, rule)
         allow = all(limits["scores"])
