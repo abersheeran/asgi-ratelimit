@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Dict
 
 WINDOW_SIZE = {
     "second": 1,
@@ -19,10 +19,11 @@ class LimitFrequency:
 @dataclass
 class CustomRule:
     group: str = "default"
-    rules: List[LimitFrequency] = None
+    rules: Optional[List[LimitFrequency]] = None
 
-    def ruleset(self, path, user):
+    def ruleset(self, path: str, user: str) -> Dict[str, Tuple[int, int]]:
         d = {}
+        assert self.rules
         for cr in self.rules:
             key = f"{path}:{user}:{cr.limit}/{cr.granularity}"
             d[key] = (cr.limit, cr.granularity)
@@ -43,7 +44,7 @@ class FixedRule:
 
     block_time: Optional[int] = None
 
-    def ruleset(self, path, user):
+    def ruleset(self, path: str, user: str) -> Dict[str, Tuple[int, int]]:
         """
         builds a dictionnary of keys, values where keys are the redis keys, and values
         is a tuple of (limit, window_size)
@@ -57,4 +58,4 @@ class FixedRule:
         return d
 
 
-RULENAMES: Tuple[str] = ("second", "minute", "hour", "day", "month")
+RULENAMES: Tuple[str, str, str, str, str] = ("second", "minute", "hour", "day", "month")
