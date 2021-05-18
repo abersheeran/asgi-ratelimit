@@ -67,7 +67,6 @@ class RateLimitMiddleware:
             return await self.app(scope, receive, send)
 
         url_path = scope["path"]
-        user, group = None, None
         for pattern, rules in self.config.items():
             if pattern.match(url_path):
                 # After finding the first rule that can match the path,
@@ -92,10 +91,8 @@ class RateLimitMiddleware:
             has_rule = bool(
                 [name for name in RULENAMES if getattr(rule, name) is not None]
             )
-        elif isinstance(rule, CustomRule):
+        elif isinstance(rule, CustomRule):  # pragma: no cover
             has_rule = True
-        else:
-            has_rule = False
 
         if self.retry_after_enabled and isinstance(self.backend, SlidingRedisBackend):
             allow, limits = await self.backend.allow_request(url_path, user, rule)
