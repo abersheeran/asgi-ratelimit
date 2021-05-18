@@ -27,7 +27,7 @@ jobs:
           redis-version: ${{ matrix.redis-version }}
       - name: Check format
         run: |
-          black . && isort . && flake8 .
+          black . --check && isort . --check && flake8 .
       - name: Test with pytest
         run: |
           coverage run -m pytest --cov-fail-under=100 -o log_cli=true -o log_cli_level=DEBUG
