@@ -41,7 +41,9 @@ class SlidingRedisBackend(BaseBackend):
         password: str = None,
         ssl: bool = False,
     ) -> None:
-        self._redis = StrictRedis(host=host, port=port, db=db, password=password, ssl=ssl)
+        self._redis = StrictRedis(
+            host=host, port=port, db=db, password=password, ssl=ssl
+        )
         self.sliding_function = self._redis.register_script(SLIDING_WINDOW_SCRIPT)
 
     async def get_limits(self, path: str, user: str, rule: Rule) -> bool:
