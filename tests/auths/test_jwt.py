@@ -66,10 +66,10 @@ async def test_jwt_auth(scope, user, group):
         {"headers": ()},
         {
             "headers": (
-                    (
-                            b"wrongkey",
-                            b"Bearer " + jwt.encode({"username": "user"}, "test-key", "HS256"),
-                    ),
+                (
+                    b"wrongkey",
+                    b"Bearer " + jwt.encode({"username": "user"}, "test-key", "HS256"),
+                ),
             ),
         },
         {
