@@ -6,7 +6,6 @@ from aredis import StrictRedis
 from ..rule import Rule
 from . import BaseBackend
 
-
 SLIDING_WINDOW_SCRIPT = """
 -- Set variables from arguments
 local now = tonumber(ARGV[1])

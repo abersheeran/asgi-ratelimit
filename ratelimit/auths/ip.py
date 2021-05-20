@@ -1,5 +1,5 @@
-from typing import Tuple
 from ipaddress import ip_address
+from typing import Tuple
 
 from ..types import Scope
 from . import EmptyInformation

@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 from typing import Optional, Tuple
 
-
 WINDOW_SIZE = {
     "second": 1,
     "minute": 60,
