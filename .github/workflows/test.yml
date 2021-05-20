@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.6, 3.7, 3.8, 3.9, 3.10-dev]
+        python-version: [3.6, 3.7, 3.8, 3.9]
         redis-version: [4, 5, 6]
 
     steps:
