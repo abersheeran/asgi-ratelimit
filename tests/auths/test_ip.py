@@ -8,6 +8,7 @@ from ratelimit.auths.ip import client_ip
     "scope, real_ip",
     [
         ({"client": ("1.1.1.1", 8000), "headers": tuple()}, "1.1.1.1"),
+        {"client": None, "headers": ((b"host", b"example.com"),)},
         (
             {
                 "client": ("127.0.0.1", 8000),
