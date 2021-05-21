@@ -3,7 +3,7 @@ import time
 from aredis import StrictRedis
 from aredis.pipeline import StrictPipeline, WatchError
 
-from ..rule import Rule, RULENAMES
+from ..rule import RULENAMES, Rule
 from . import BaseBackend
 
 DECREASE_SCRIPT = """
@@ -29,7 +29,9 @@ class RedisBackend(BaseBackend):
         password: str = None,
         ssl: bool = False,
     ) -> None:
-        self._redis = StrictRedis(host=host, port=port, db=db, password=password, ssl=ssl)
+        self._redis = StrictRedis(
+            host=host, port=port, db=db, password=password, ssl=ssl
+        )
         self.decrease_function = self._redis.register_script(DECREASE_SCRIPT)
 
     async def increase_limit(self, path: str, user: str, rule: Rule) -> bool:

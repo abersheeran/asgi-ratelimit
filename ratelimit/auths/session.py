@@ -1,4 +1,4 @@
-from typing import Tuple, Dict
+from typing import Dict, Tuple
 
 from ..types import Scope
 from . import EmptyInformation

@@ -4,7 +4,6 @@ import pytest
 from ratelimit import RateLimitMiddleware, Rule
 from ratelimit.auths import EmptyInformation
 from ratelimit.backends.redis import RedisBackend
-from ratelimit.backends.slidingredis import SlidingRedisBackend
 
 
 async def hello_world(scope, receive, send):
@@ -38,6 +37,7 @@ async def handle_auth_error(exc):
     async def send_response(scope, receive, send):
         await send({"type": "http.response.start", "status": 401})
         await send({"type": "http.response.body", "body": b"", "more_body": False})
+
     return send_response
 
 
@@ -54,7 +54,6 @@ async def test_on_auth_error_default():
     async with httpx.AsyncClient(
         app=rate_limit, base_url="http://testserver"
     ) as client:  # type: httpx.AsyncClient
-
 
         response = await client.get("/", headers={"user": "test", "group": "default"})
         assert response.status_code == 200

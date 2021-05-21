@@ -1,5 +1,5 @@
-import pytest
 import jwt
+import pytest
 
 from ratelimit.auths import EmptyInformation
 from ratelimit.auths.jwt import create_jwt_auth
@@ -64,6 +64,14 @@ async def test_jwt_auth(scope, user, group):
     "scope",
     [
         {"headers": ()},
+        {
+            "headers": (
+                (
+                    b"wrongkey",
+                    b"Bearer " + jwt.encode({"username": "user"}, "test-key", "HS256"),
+                ),
+            ),
+        },
         {
             "headers": (
                 (

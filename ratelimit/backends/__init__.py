@@ -1,1 +1,1 @@
-from .base import BaseBackend
+from .base import BaseBackend  # noqa: F401

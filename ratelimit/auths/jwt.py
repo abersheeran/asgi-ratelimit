@@ -1,4 +1,4 @@
-from typing import Callable, Awaitable, Tuple, List, Union, TypeVar
+from typing import Awaitable, Callable, List, Tuple, TypeVar, Union
 
 import jwt
 

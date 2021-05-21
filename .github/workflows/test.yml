@@ -25,6 +25,12 @@ jobs:
         uses: supercharge/redis-github-action@1.1.0
         with:
           redis-version: ${{ matrix.redis-version }}
+      - name: Check format
+        run: |
+          black --check --diff .
+          isort --check .
+          flake8 .
       - name: Test with pytest
         run: |
-          pytest --cov --cov-fail-under=100 -o log_cli=true -o log_cli_level=DEBUG
+          coverage run -m pytest --log-cli-level=DEBUG
+          coverage report --fail-under=100

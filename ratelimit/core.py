@@ -1,9 +1,9 @@
 import re
-from typing import Dict, Sequence, Tuple, Callable, Awaitable, Optional
+from typing import Awaitable, Callable, Dict, Optional, Sequence, Tuple
 
-from .types import ASGIApp, Scope, Receive, Send
 from .backends import BaseBackend
-from .rule import Rule, RULENAMES
+from .rule import RULENAMES, Rule
+from .types import ASGIApp, Receive, Scope, Send
 
 
 async def default_429(scope: Scope, receive: Receive, send: Send) -> None:
@@ -40,19 +40,17 @@ class RateLimitMiddleware:
             return await self.app(scope, receive, send)
 
         url_path = scope["path"]
-        user, group = None, None
         for pattern, rules in self.config.items():
             if pattern.match(url_path):
                 # After finding the first rule that can match the path,
                 # calculate the user ID and group
-                if user is None and group is None:
-                    try:
-                        user, group = await self.authenticate(scope)
-                    except Exception as exc:
-                        if self.on_auth_error is not None:
-                            reponse = await self.on_auth_error(exc)
-                            return await reponse(scope, receive, send)
-                        raise exc
+                try:
+                    user, group = await self.authenticate(scope)
+                except Exception as exc:
+                    if self.on_auth_error is not None:
+                        reponse = await self.on_auth_error(exc)
+                        return await reponse(scope, receive, send)
+                    raise exc
 
                 # Select the first rule that can be matched
                 _rules = [rule for rule in rules if group == rule.group]
