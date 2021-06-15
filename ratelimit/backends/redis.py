@@ -64,5 +64,6 @@ class RedisBackend(BaseBackend):
 
         if retry_after > 0 and rule.block_time:
             await self.set_block_time(user, rule.block_time)
+            retry_after = rule.block_time
 
         return retry_after
