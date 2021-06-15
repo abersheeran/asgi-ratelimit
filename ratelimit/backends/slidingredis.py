@@ -59,12 +59,6 @@ class SlidingRedisBackend(BaseBackend):
         # logger.debug(f"{epoch} {r} : {all(r)}")
         return all(r)
 
-    async def decrease_limit(self, path: str, user: str, rule: Rule) -> bool:
-        raise NotImplementedError()
-
-    async def increase_limit(self, path: str, user: str, rule: Rule) -> bool:
-        raise NotImplementedError()
-
     async def set_block_time(self, user: str, block_time: int) -> None:
         await self._redis.set(f"blocking:{user}", True, block_time)
 

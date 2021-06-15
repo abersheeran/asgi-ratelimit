@@ -154,7 +154,7 @@ async def test_redis(redisbackend):
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("redisbackend", [SlidingRedisBackend])
+@pytest.mark.parametrize("redisbackend", [RedisBackend, SlidingRedisBackend])
 async def test_multiple(redisbackend):
     await StrictRedis().flushdb()
     rate_limit = RateLimitMiddleware(
