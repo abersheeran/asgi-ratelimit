@@ -18,7 +18,7 @@ end
 for i = 1, #KEYS do
     local value = redis.call('GET', KEYS[i])
     if value and tonumber(value) < 1 then
-        return 0
+        return ruleset[KEYS[i]][2]
     end
 end
 
@@ -26,7 +26,7 @@ end
 for i, key in pairs(KEYS) do
     redis.call('DECR', key)
 end
-return 1
+return 0
 """
 
 
@@ -47,21 +47,22 @@ class RedisBackend(BaseBackend):
     async def set_block_time(self, user: str, block_time: int) -> None:
         await self._redis.set(f"blocking:{user}", True, block_time)
 
-    async def is_blocking(self, user: str) -> bool:
-        return bool(await self._redis.get(f"blocking:{user}"))
+    async def is_blocking(self, user: str) -> int:
+        return int(await self._redis.ttl(f"blocking:{user}"))
 
-    async def allow_request(self, path: str, user: str, rule: Rule) -> bool:
-        if await self.is_blocking(user):
-            return False
+    async def retry_after(self, path: str, user: str, rule: Rule) -> bool:
+        block_time = await self.is_blocking(user)
+        if block_time > 0:
+            return block_time
 
         ruleset = rule.ruleset(path, user)
-        allow = bool(
+        retry_after = int(
             await self.lua_script.execute(
                 keys=list(ruleset.keys()), args=[json.dumps(ruleset)]
             )
         )
 
-        if not allow and rule.block_time:
+        if retry_after > 0 and rule.block_time:
             await self.set_block_time(user, rule.block_time)
 
-        return allow
+        return retry_after
