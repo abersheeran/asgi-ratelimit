@@ -1,6 +1,22 @@
-name: Test
+name: CI
 
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - master
+    tags:
+      - "*"
+    paths:
+      - "**.py"
+      - "poetry.lock"
+      - "!ratelimit/__version__.py"
+  pull_request:
+    branches:
+      - master
+    paths:
+      - "**.py"
+      - "poetry.lock"
+      - "!ratelimit/__version__.py"
 
 jobs:
   Linux-Test:
