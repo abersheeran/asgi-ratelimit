@@ -17,16 +17,16 @@ class Rule:
     def ruleset(self, path: str, user: str) -> Dict[str, Tuple[int, int]]:
         """
         builds a dictionnary of keys, values where keys are the redis keys, and values
-        is a tuple of (limit, window_size)
+        is a tuple of (limit, ttl)
         """
         return {
-            f"{path}:{user}:{name}": (limit, WINDOW_SIZE[name])
+            f"{path}:{user}:{name}": (limit, TTL[name])
             for name, limit in map(lambda name: (name, getattr(self, name)), RULENAMES)
             if limit is not None
         }
 
 
-WINDOW_SIZE = {
+TTL = {
     "second": 1,
     "minute": 60,
     "hour": 60 * 60,
