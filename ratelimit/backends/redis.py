@@ -6,7 +6,6 @@ from aredis.scripting import Script
 from ..rule import Rule
 from . import BaseBackend
 
-
 SCRIPT = """
 local ruleset = cjson.decode(ARGV[1])
 
