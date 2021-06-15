@@ -1,13 +1,5 @@
 from dataclasses import dataclass
-from typing import Optional, Tuple
-
-WINDOW_SIZE = {
-    "second": 1,
-    "minute": 60,
-    "hour": 60 * 60,
-    "day": 24 * 60 * 60,
-    "month": 31 * 24 * 60 * 60,
-}
+from typing import Dict, Optional, Tuple
 
 
 @dataclass
@@ -22,18 +14,24 @@ class Rule:
 
     block_time: Optional[int] = None
 
-    def ruleset(self, path, user):
+    def ruleset(self, path: str, user: str) -> Dict[str, Tuple[int, int]]:
         """
         builds a dictionnary of keys, values where keys are the redis keys, and values
-        is a tuple of (limit, window_size)
+        is a tuple of (limit, ttl)
         """
-        d = {}
-        for name in RULENAMES:
-            limit = getattr(self, name)
-            if limit is not None:
-                key = f"{path}:{user}:{name}"
-                d[key] = (limit, WINDOW_SIZE[name])
-        return d
+        return {
+            f"{path}:{user}:{name}": (limit, TTL[name])
+            for name, limit in map(lambda name: (name, getattr(self, name)), RULENAMES)
+            if limit is not None
+        }
 
+
+TTL = {
+    "second": 1,
+    "minute": 60,
+    "hour": 60 * 60,
+    "day": 24 * 60 * 60,
+    "month": 31 * 24 * 60 * 60,
+}
 
 RULENAMES: Tuple[str] = ("second", "minute", "hour", "day", "month")

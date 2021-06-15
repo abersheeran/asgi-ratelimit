@@ -49,21 +49,10 @@ class SlidingRedisBackend(BaseBackend):
     async def get_limits(self, path: str, user: str, rule: Rule) -> bool:
         epoch = time.time()
         ruleset = rule.ruleset(path, user)
-        keys = list(ruleset.keys())
-        args = [epoch, json.dumps(ruleset)]
-        # quoted_args = [f"'{a}'" for a in args]
-        # cli = f"redis-cli --ldb --eval /tmp/script.lua {' '.join(keys)} , {' '.join(quoted_args)}"
-        # logger.debug(cli)
-        r = await self.sliding_function.execute(keys=keys, args=args)
-        # from tests.backends.test_redis import logger
-        # logger.debug(f"{epoch} {r} : {all(r)}")
+        r = await self.sliding_function.execute(
+            keys=list(ruleset.keys()), args=[epoch, json.dumps(ruleset)]
+        )
         return all(r)
-
-    async def decrease_limit(self, path: str, user: str, rule: Rule) -> bool:
-        raise NotImplementedError()
-
-    async def increase_limit(self, path: str, user: str, rule: Rule) -> bool:
-        raise NotImplementedError()
 
     async def set_block_time(self, user: str, block_time: int) -> None:
         await self._redis.set(f"blocking:{user}", True, block_time)
