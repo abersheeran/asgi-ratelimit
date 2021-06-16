@@ -55,7 +55,7 @@ app.add_middleware(
 ```
 
 > :warning: **The pattern's order is important, rules are set on the first match**: Be careful here !
- 
+
 Next, provide a custom authenticate function, or use one of the [existing auth methods](#built-in-auth-functions).
 
 ```python
@@ -176,10 +176,10 @@ jwt_auth = create_jwt_auth("KEY", "HS256")
 
 Get `user` and `group` from JWT that in `Authorization` header.
 
-
 ### Custom auth error handler
 
 Normally exceptions raised in the authentication function result in an Internal Server Error, but you can pass a function to handle the errors and send the appropriate response back to the user. For example, if you're using FastAPI or Starlette:
+
 ```python
 from fastapi.responses import JSONResponse
 from ratelimit.types import ASGIApp
@@ -189,7 +189,9 @@ async def handle_auth_error(exc: Exception) -> ASGIApp:
 
 RateLimitMiddleware(..., on_auth_error=handle_auth_error)
 ```
+
 For advanced usage you can handle the response completely by yourself:
+
 ```python
 from fastapi.responses import JSONResponse
 from ratelimit.types import ASGIApp, Scope, Receive, Send
