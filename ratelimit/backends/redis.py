@@ -50,7 +50,7 @@ class RedisBackend(BaseBackend):
     async def is_blocking(self, user: str) -> int:
         return int(await self._redis.ttl(f"blocking:{user}"))
 
-    async def retry_after(self, path: str, user: str, rule: Rule) -> bool:
+    async def retry_after(self, path: str, user: str, rule: Rule) -> int:
         block_time = await self.is_blocking(user)
         if block_time > 0:
             return block_time
