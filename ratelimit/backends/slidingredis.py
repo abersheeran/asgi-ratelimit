@@ -76,13 +76,6 @@ class SlidingRedisBackend(BaseBackend):
         block_time = await self.is_blocking(user)
         if block_time > 0:
             return block_time
-        # if await self.is_blocking(user):
-        #     assert rule.block_time
-        #     return False, {
-        #         "expire_in": [rule.block_time],
-        #         "scores": [],
-        #         "epoch": time.time(),
-        #     }
 
         limits = await self.get_limits(path, user, rule)
         retry_after = limits["expire_in"][0] if not all(limits["scores"]) else 0
