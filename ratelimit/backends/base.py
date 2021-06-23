@@ -9,5 +9,5 @@ class BaseBackend(ABC):
     """
 
     @abstractmethod
-    async def allow_request(self, path: str, user: str, rule: Rule) -> bool:
+    async def retry_after(self, path: str, user: str, rule: Rule) -> int:
         raise NotImplementedError

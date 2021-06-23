@@ -6,9 +6,20 @@ from .rule import RULENAMES, Rule
 from .types import ASGIApp, Receive, Scope, Send
 
 
-async def default_429(scope: Scope, receive: Receive, send: Send) -> None:
-    await send({"type": "http.response.start", "status": 429})
-    await send({"type": "http.response.body", "body": b"", "more_body": False})
+def on_blocked(retry_after: int) -> ASGIApp:
+    async def default_429(scope: Scope, receive: Receive, send: Send) -> None:
+        await send(
+            {
+                "type": "http.response.start",
+                "status": 429,
+                "headers": [
+                    (b"retry-after", str(retry_after).encode("ascii")),
+                ],
+            }
+        )
+        await send({"type": "http.response.body", "body": b"", "more_body": False})
+
+    return default_429
 
 
 class RateLimitMiddleware:
@@ -24,7 +35,7 @@ class RateLimitMiddleware:
         config: Dict[str, Sequence[Rule]],
         *,
         on_auth_error: Optional[Callable[[Exception], Awaitable[ASGIApp]]] = None,
-        on_blocked: ASGIApp = default_429,
+        on_blocked: Callable[[int], ASGIApp] = on_blocked,
     ) -> None:
         self.app = app
         self.authenticate = authenticate
@@ -60,9 +71,11 @@ class RateLimitMiddleware:
         else:  # If no rule can match, run `self.app` and return
             return await self.app(scope, receive, send)
 
-        has_rule = bool([name for name in RULENAMES if getattr(rule, name) is not None])
-
-        if not has_rule or await self.backend.allow_request(url_path, user, rule):
+        if not [name for name in RULENAMES if getattr(rule, name) is not None]:
             return await self.app(scope, receive, send)
 
-        return await self.on_blocked(scope, receive, send)
+        retry_after = await self.backend.retry_after(url_path, user, rule)
+        if retry_after == 0:
+            return await self.app(scope, receive, send)
+
+        return await self.on_blocked(retry_after)(scope, receive, send)

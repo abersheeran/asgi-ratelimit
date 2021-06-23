@@ -34,4 +34,4 @@ TTL = {
     "month": 31 * 24 * 60 * 60,
 }
 
-RULENAMES: Tuple[str] = ("second", "minute", "hour", "day", "month")
+RULENAMES: Tuple[str, ...] = ("second", "minute", "hour", "day", "month")
