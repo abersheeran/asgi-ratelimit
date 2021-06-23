@@ -95,6 +95,7 @@ async def test_redis(redisbackend):
             "/second_limit", headers={"user": "user", "group": "default"}
         )
         assert response.status_code == 429
+        assert response.headers["retry-after"] == "1"
 
         response = await client.get(
             "/second_limit", headers={"user": "admin-user", "group": "admin"}
@@ -132,6 +133,7 @@ async def test_redis(redisbackend):
             "/block", headers={"user": "user", "group": "default"}
         )
         assert response.status_code == 429
+        assert response.headers["retry-after"] == "5"
 
         await asyncio.sleep(1)
 
