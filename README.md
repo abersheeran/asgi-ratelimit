@@ -136,10 +136,18 @@ Example: `Rule(second=5, block_time=60)`, this rule will limit the user to a max
 Just specify `on_blocked` and you can customize the asgi application that is called when blocked.
 
 ```python
-async def yourself_429(scope: Scope, receive: Receive, send: Send) -> None:
-    await send({"type": "http.response.start", "status": 429})
-    await send({"type": "http.response.body", "body": b"429 page", "more_body": False})
+def yourself_429(retry_after: int):
+    async def inside_yourself_429(scope: Scope, receive: Receive, send: Send) -> None:
+        await send({"type": "http.response.start", "status": 429})
+        await send(
+            {
+                "type": "http.response.body",
+                "body": b"custom 429 page",
+                "more_body": False,
+            }
+        )
 
+    return inside_yourself_429
 
 RateLimitMiddleware(..., on_blocked=yourself_429)
 ```
