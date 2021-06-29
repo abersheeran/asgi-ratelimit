@@ -4,6 +4,7 @@ import pytest
 from ratelimit import RateLimitMiddleware, Rule
 from ratelimit.auths import EmptyInformation
 from ratelimit.backends.redis import RedisBackend
+from ratelimit.types import Receive, Scope, Send
 
 
 async def hello_world(scope, receive, send):
@@ -90,3 +91,39 @@ async def test_on_auth_error_with_handler():
         response = await client.get("/", headers=None)
         assert response.status_code == 401
         assert response.text == ""
+
+
+def yourself_429(retry_after: int):
+    async def inside_yourself_429(scope: Scope, receive: Receive, send: Send) -> None:
+        await send({"type": "http.response.start", "status": 429})
+        await send(
+            {
+                "type": "http.response.body",
+                "body": b"custom 429 page",
+                "more_body": False,
+            }
+        )
+
+    return inside_yourself_429
+
+
+@pytest.mark.asyncio
+async def test_custom_blocked():
+    rate_limit = RateLimitMiddleware(
+        hello_world,
+        authenticate=auth_func,
+        backend=RedisBackend(),
+        config={r"/": [Rule(second=1), Rule(group="admin")]},
+        on_blocked=yourself_429,
+    )
+
+    async with httpx.AsyncClient(
+        app=rate_limit, base_url="http://testserver"
+    ) as client:  # type: httpx.AsyncClient
+
+        response = await client.get("/", headers={"user": "user", "group": "default"})
+        assert response.status_code == 200
+
+        response = await client.get("/", headers={"user": "user", "group": "default"})
+        assert response.status_code == 429
+        assert response.content == b"custom 429 page"
