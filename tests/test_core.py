@@ -127,3 +127,27 @@ async def test_custom_blocked():
         response = await client.get("/", headers={"user": "user", "group": "default"})
         assert response.status_code == 429
         assert response.content == b"custom 429 page"
+
+
+@pytest.mark.asyncio
+async def test_rule_zone():
+    rate_limit = RateLimitMiddleware(
+        hello_world,
+        auth_func,
+        RedisBackend(),
+        {
+            r"/message": [Rule(second=1, zone="commom")],
+            r"/\d+": [Rule(second=1, zone="commom")],
+        },
+    )
+    async with httpx.AsyncClient(
+        app=rate_limit, base_url="http://testserver"
+    ) as client:  # type: httpx.AsyncClient
+
+        response = await client.get("/10", headers={"user": "user", "group": "default"})
+        assert response.status_code == 200
+
+        response = await client.get(
+            "/message", headers={"user": "user", "group": "default"}
+        )
+        assert response.status_code == 429

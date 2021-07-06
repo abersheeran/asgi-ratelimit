@@ -14,6 +14,8 @@ class Rule:
 
     block_time: Optional[int] = None
 
+    zone: Optional[str] = None
+
     def ruleset(self, path: str, user: str) -> Dict[str, Tuple[int, int]]:
         """
         builds a dictionnary of keys, values where keys are the redis keys, and values

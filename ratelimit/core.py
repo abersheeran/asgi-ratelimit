@@ -74,7 +74,10 @@ class RateLimitMiddleware:
         if not [name for name in RULENAMES if getattr(rule, name) is not None]:
             return await self.app(scope, receive, send)
 
-        retry_after = await self.backend.retry_after(url_path, user, rule)
+        if rule.zone is None:
+            retry_after = await self.backend.retry_after(url_path, user, rule)
+        else:
+            retry_after = await self.backend.retry_after(rule.zone, user, rule)
         if retry_after == 0:
             return await self.app(scope, receive, send)
 
