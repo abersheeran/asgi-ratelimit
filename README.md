@@ -122,12 +122,15 @@ Example for a "admin" group with higher limits.
     ...
 ```
 
-Sometimes you may want to specify that some APIs share the same flow control pool. In other words, flow control is performed on the entire set of APIs instead of a single specific API. Only the `zone` parameter needs to be used.
+Sometimes you may want to specify that some APIs share the same flow control pool. In other words, flow control is performed on the entire set of APIs instead of a single specific API. Only the `zone` parameter needs to be used. **Note**: You can give different rules the same `zone` value, and all rules with the same `zone` value share the same flow control pool.
 
 ```python
     ...
     config={
-        r"/user/\d+": [Rule(minute=200, zone="user-api")],
+        r"/user/\d+": [
+            Rule(minute=200, zone="user-api"),
+            Rule(second=100, zone="user-api", group="admin"),
+        ],
     }
     ...
 ```
