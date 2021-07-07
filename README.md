@@ -54,7 +54,7 @@ app.add_middleware(
 )
 ```
 
-> :warning: **The pattern's order is important, rules are set on the first match**: Be careful here !
+:warning: **The pattern's order is important, rules are set on the first match**: Be careful here !
 
 Next, provide a custom authenticate function, or use one of the [existing auth methods](#built-in-auth-functions).
 
@@ -71,11 +71,8 @@ async def AUTH_FUNCTION(scope: Scope) -> Tuple[str, str]:
     # or use the function in the following document directly.
     return USER_UNIQUE_ID, GROUP_NAME
 
-rate_limit = RateLimitMiddleware(
-    ASGI_APP,
-    AUTH_FUNCTION,
-    ...
-)
+
+rate_limit = RateLimitMiddleware(ASGI_APP, AUTH_FUNCTION, ...)
 ```
 
 The `Rule` type takes a time unit (e.g. `"second"`) and/or a `"group"`, as a param. If the `"group"` param is not specified then the `"authenticate"` method needs to return the "default group".
@@ -120,6 +117,19 @@ Example for a "admin" group with higher limits.
         r"^/towns": [
             Rule(day=400, minute=200, second=10),
             Rule(minute=500, second=25, group="admin"),
+        ],
+    }
+    ...
+```
+
+Sometimes you may want to specify that some APIs share the same flow control pool. In other words, flow control is performed on the entire set of APIs instead of a single specific API. Only the `zone` parameter needs to be used. **Note**: You can give different rules the same `zone` value, and all rules with the same `zone` value share the same flow control pool.
+
+```python
+    ...
+    config={
+        r"/user/\d+": [
+            Rule(minute=200, zone="user-api"),
+            Rule(second=100, zone="user-api", group="admin"),
         ],
     }
     ...
