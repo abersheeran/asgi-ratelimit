@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "asgi-ratelimit"
-version = "0.5.1"
+version = "0.6.0"
 description = ""
 authors = ["abersheeran <me@abersheeran.com>"]
 readme = "README.md"
