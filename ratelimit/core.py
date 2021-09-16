@@ -64,15 +64,14 @@ class RateLimitMiddleware:
                     raise exc
 
                 # Select the first rule that can be matched
-                rule = next((rule for rule in rules if group == rule.group), None)
+                rule = next(filter(lambda r: r.group == group, rules), None)
                 if rule:
                     break
         else:  # If no rule can match, run `self.app` and return
             return await self.app(scope, receive, send)
 
-        if not next(
-            (name for name in RULENAMES if getattr(rule, name) is not None), None
-        ):
+        # Find if rule have any of required attributes
+        if not any(getattr(rule, name) for name in RULENAMES):
             return await self.app(scope, receive, send)
 
         if rule.zone is None:
