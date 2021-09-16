@@ -59,8 +59,8 @@ class RateLimitMiddleware:
                     user, group = await self.authenticate(scope)
                 except Exception as exc:
                     if self.on_auth_error is not None:
-                        reponse = await self.on_auth_error(exc)
-                        return await reponse(scope, receive, send)
+                        response = await self.on_auth_error(exc)
+                        return await response(scope, receive, send)
                     raise exc
 
                 # Select the first rule that can be matched
