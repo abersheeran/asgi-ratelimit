@@ -19,7 +19,7 @@ def create_jwt_auth(
     key: Union[bytes, str, RSAPublicKey, RSAPrivateKey],
     algorithms: Union[List[str], str],
     user_key: str = "user",
-    group_key: str = "group"
+    group_key: str = "group",
 ) -> Callable[[Scope], Awaitable[Tuple[str, str]]]:
     """
     create jwt authentication function
