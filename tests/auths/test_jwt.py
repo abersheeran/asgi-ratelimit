@@ -43,13 +43,14 @@ from ratelimit.auths.jwt import create_jwt_auth
                 "headers": (
                     (
                         b"authorization",
-                        b"Bearer " + jwt.encode({"user": "user"}, "test-key", "HS256"),
+                        b"Bearer "
+                        + jwt.encode({"user": "user"}, "test-key", "HS256"),
                     ),
                 ),
             },
             "user",
             "default",
-        )
+        ),
     ],
 )
 @pytest.mark.asyncio
@@ -79,9 +80,9 @@ async def test_jwt_auth(scope, user, group):
 )
 @pytest.mark.asyncio
 async def test_jwt_auth_other_user_key(scope, user, group):
-    val = await create_jwt_auth(
-        "test-key", ["HS256", "HS512"], user_key="user_id"
-    )(scope)
+    val = await create_jwt_auth("test-key", ["HS256", "HS512"], user_key="user_id")(
+        scope
+    )
     assert val == (
         user,
         group,
