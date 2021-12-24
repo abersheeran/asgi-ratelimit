@@ -61,6 +61,35 @@ async def test_jwt_auth(scope, user, group):
 
 
 @pytest.mark.parametrize(
+    "scope, user, group",
+    [
+        (
+            {
+                "headers": (
+                    (
+                        b"authorization",
+                        b"Bearer "
+                        + jwt.encode({"user_id": "user"}, "test-key", "HS256"),
+                    ),
+                ),
+            },
+            "user",
+            "default",
+        ),
+    ],
+)
+@pytest.mark.asyncio
+async def test_jwt_auth_other_user_key(scope, user, group):
+    val = await create_jwt_auth("test-key", ["HS256", "HS512"], user_key="user_id")(
+        scope
+    )
+    assert val == (
+        user,
+        group,
+    )
+
+
+@pytest.mark.parametrize(
     "scope",
     [
         {"headers": ()},
