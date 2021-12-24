@@ -19,8 +19,7 @@ def create_jwt_auth(
     key: Union[bytes, str, RSAPublicKey, RSAPrivateKey],
     algorithms: Union[List[str], str],
     user_key: str = "user",
-    group_key: str = "group",
-    default_group: str = "default"
+    group_key: str = "group"
 ) -> Callable[[Scope], Awaitable[Tuple[str, str]]]:
     """
     create jwt authentication function
@@ -53,7 +52,7 @@ def create_jwt_auth(
         data = jwt.decode(json_web_token, key, algorithms=algorithms)
 
         try:
-            return data[user_key], data.get(group_key, default_group)
+            return data[user_key], data.get(group_key, "default")
         except KeyError:
             raise EmptyInformation(scope)
 
