@@ -18,8 +18,8 @@ class Rule:
 
     def ruleset(self, path: str, user: str) -> Dict[str, Tuple[int, int]]:
         """
-        builds a dictionnary of keys, values where keys are the redis keys, and values
-        is a tuple of (limit, ttl)
+        builds a dictionary of keys, values where keys are
+        the redis keys and values is a tuple of (limit, ttl)
         """
         return {
             f"{path}:{user}:{name}": (limit, TTL[name])
