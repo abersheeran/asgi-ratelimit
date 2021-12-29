@@ -64,6 +64,7 @@ verbose = false
 
 [tool.black]
 target-version = ['py37']
+line_length=79
 
 [build-system]
 requires = ["poetry>=0.12"]

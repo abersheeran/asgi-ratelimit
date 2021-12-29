@@ -17,11 +17,9 @@ def _on_blocked(retry_after: int) -> ASGIApp:
                 ],
             }
         )
-        await send({
-            "type": "http.response.body",
-            "body": b"",
-            "more_body": False
-        })
+        await send(
+            {"type": "http.response.body", "body": b"", "more_body": False}
+        )
 
     return default_429
 
@@ -39,7 +37,8 @@ class RateLimitMiddleware:
         config: Dict[str, Sequence[Rule]],
         *,
         on_auth_error: Optional[
-            Callable[[Exception], Awaitable[ASGIApp]]] = None,
+            Callable[[Exception], Awaitable[ASGIApp]]
+        ] = None,
         on_blocked: Callable[[int], ASGIApp] = _on_blocked,
     ) -> None:
 
@@ -47,11 +46,13 @@ class RateLimitMiddleware:
         self.authenticate = authenticate
         self.backend = backend
 
-        assert isinstance(self.authenticate, Callable), \
-            f"invalid authenticate function: {self.authenticate}"
+        assert isinstance(
+            self.authenticate, Callable
+        ), f"invalid authenticate function: {self.authenticate}"
 
-        assert isinstance(backend, BaseBackend), \
-            f"invalid backend: {self.backend}"
+        assert isinstance(
+            backend, BaseBackend
+        ), f"invalid backend: {self.backend}"
 
         try:
             self.config: Dict[re.Pattern, Sequence[Rule]] = {
@@ -64,9 +65,7 @@ class RateLimitMiddleware:
         self.on_blocked = on_blocked
 
     async def __call__(
-        self,
-        scope: Scope,
-        receive: Receive, send: Send
+        self, scope: Scope, receive: Receive, send: Send
     ) -> None:
         if scope["type"] != "http":  # pragma: no cover
             return await self.app(scope, receive, send)

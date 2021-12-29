@@ -23,7 +23,9 @@ class Rule:
         """
         return {
             f"{path}:{user}:{name}": (limit, TTL[name])
-            for name, limit in map(lambda name: (name, getattr(self, name)), RULENAMES)
+            for name, limit in map(
+                lambda name: (name, getattr(self, name)), RULENAMES
+            )
             if limit is not None
         }
 
