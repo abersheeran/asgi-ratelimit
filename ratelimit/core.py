@@ -2,7 +2,7 @@ import re
 from typing import Awaitable, Callable, Dict, Optional, Sequence, Tuple
 
 from .backends import BaseBackend
-from .rule import Rule, RULENAMES
+from .rule import RULENAMES, Rule
 from .types import ASGIApp, Receive, Scope, Send
 
 
