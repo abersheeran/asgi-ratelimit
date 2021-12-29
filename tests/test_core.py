@@ -43,7 +43,8 @@ async def handle_auth_error(exc):
     return send_response
 
 
-def test_invalid_path_pattern():
+def test_invalid_init_config():
+    # invalid path regexp
     with pytest.raises(ValueError):
         RateLimitMiddleware(
             hello_world,
@@ -51,6 +52,28 @@ def test_invalid_path_pattern():
             RedisBackend(),
             {
                 r"??.*": [Rule(group="admin")],
+            },
+        )
+
+    # invalid authenticate
+    with pytest.raises(AssertionError):
+        RateLimitMiddleware(
+            hello_world,
+            "123",
+            RedisBackend(),
+            {
+                r"/test": [Rule(group="admin")],
+            },
+        )
+
+    # invalid backend
+    with pytest.raises(AssertionError):
+        RateLimitMiddleware(
+            hello_world,
+            auth_func,
+            None,
+            {
+                r"/test": [Rule(group="admin")],
             },
         )
 
