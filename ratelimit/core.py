@@ -81,7 +81,7 @@ class RateLimitMiddleware:
         else:  # If no rule can match, run `self.app` and return
             return await self.app(scope, receive, send)
 
-        if not list(filter(lambda name: getattr(rule, name) is not None, RULENAMES)):
+        if not any(getattr(rule, name) is not None for name in RULENAMES):
             return await self.app(scope, receive, send)
 
         path: str = url_path if rule.zone is None else rule.zone
