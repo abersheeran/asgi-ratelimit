@@ -29,9 +29,28 @@ async def auth_func(scope):
     return user, group
 
 
+async def base_test_multi(client):
+    response = await client.get(
+        "/multi-minute", headers={"user": "user", "group": "default"}
+    )
+    assert response.status_code == 200
+
+    response = await client.get(
+        "/multi-minute", headers={"user": "user", "group": "default"}
+    )
+    assert response.status_code == 200
+
+    response = await client.get(
+        "/multi-minute", headers={"user": "user", "group": "default"}
+    )
+    assert response.status_code == 429
+
+
 async def base_test_cases(client):
     response = await client.get("/")
     assert response.status_code == 200
+
+    # ========== Test second ===============
 
     response = await client.get(
         "/second_limit", headers={"user": "user", "group": "default"}
@@ -55,6 +74,8 @@ async def base_test_cases(client):
     )
     assert response.status_code == 200
 
+    # ========== Test minute ===============
+
     response = await client.get(
         "/minute_limit", headers={"user": "user", "group": "default"}
     )
@@ -69,6 +90,8 @@ async def base_test_cases(client):
         "/minute_limit", headers={"user": "admin-user", "group": "admin"}
     )
     assert response.status_code == 200
+
+    # ========== Test block ===============
 
     response = await client.get("/block", headers={"user": "user", "group": "default"})
     assert response.status_code == 200

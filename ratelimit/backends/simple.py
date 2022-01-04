@@ -1,11 +1,12 @@
 import asyncio
 import time
+from asyncio import TimerHandle
 from collections import defaultdict
 from threading import Lock
-from typing import Dict, List
+from typing import Dict, List, Optional
 
-from ..rule import Rule
 from . import BaseBackend
+from ..rule import Rule
 
 lock = Lock()
 
@@ -34,27 +35,30 @@ class MemoryBackend(BaseBackend):
     def now() -> int:
         return int(time.time())
 
+    @staticmethod
+    def call_at(later, callback, *args) -> TimerHandle:
+        loop = asyncio.get_event_loop()
+        return loop.call_at(later, callback, *args)
+
     def is_blocking(self, user: str) -> int:
         end_ts: int = self.blocked_users.get(user, 0)
         return max(end_ts - self.now(), 0)
 
     @synchronized
-    def remove_user(self, user: str):
-        self.blocked_users.pop(user, None)
+    def remove_user(self, user: str) -> Optional[int]:
+        return self.blocked_users.pop(user, None)
 
     @synchronized
-    def remove_rule(self, path: str, rule_key: str):
-        self.blocks[path].pop(rule_key, None)
+    def remove_rule(self, path: str, rule_key: str) -> Optional[List[int]]:
+        return self.blocks[path].pop(rule_key, None)
 
     def remove_blocked_user_later(self, user: str):
-        loop = asyncio.get_event_loop()
         later = self.blocked_users[user]
-        loop.call_at(later, lambda: self.remove_user(user))
+        self.call_at(later, self.remove_user, user)
 
     def remove_rule_later(self, path: str, rule_key: str):
-        loop = asyncio.get_event_loop()
         _, deadline = self.blocks[path][rule_key]
-        loop.call_at(deadline, lambda: self.remove_rule(path, rule_key))
+        return self.call_at(deadline, self.remove_rule, path, rule_key)
 
     def set_blocked_user(self, user: str, block_time: int) -> int:
         self.blocked_users[user] = block_time + self.now()
