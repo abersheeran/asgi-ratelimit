@@ -12,7 +12,6 @@ def _on_blocked(retry_after: int) -> ASGIApp:
                 ],
             }
         )
-        await send(
-            {"type": "http.response.body", "body": b"", "more_body": False})
+        await send({"type": "http.response.body", "body": b"", "more_body": False})
 
     return default_429
