@@ -29,8 +29,21 @@ from typing import Tuple
 
 from ratelimit import RateLimitMiddleware, Rule
 from ratelimit.auths import EmptyInformation
-from ratelimit.backends.redis import RedisBackend
+from ratelimit.backends.redis import MemoryBackend, RedisBackend
 
+# Simple rate-limiter in memory:
+
+rate_limit = RateLimitMiddleware(
+    ASGI_APP,
+    AUTH_FUNCTION,
+    MemoryBackend(),
+    {
+        r"^/towns": [Rule(second=1, group="default"), Rule(group="admin")],
+        r"^/forests": [Rule(minute=1, group="default"), Rule(group="admin")],
+    },
+)
+
+# with Redis:
 
 rate_limit = RateLimitMiddleware(
     ASGI_APP,
