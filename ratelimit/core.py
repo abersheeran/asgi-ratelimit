@@ -1,3 +1,4 @@
+import asyncio
 import re
 from typing import Awaitable, Callable, Dict, Optional, Sequence, Tuple
 
@@ -17,9 +18,7 @@ def _on_blocked(retry_after: int) -> ASGIApp:
                 ],
             }
         )
-        await send(
-            {"type": "http.response.body", "body": b"", "more_body": False}
-        )
+        await send({"type": "http.response.body", "body": b"", "more_body": False})
 
     return default_429
 
@@ -36,9 +35,7 @@ class RateLimitMiddleware:
         backend: BaseBackend,
         config: Dict[str, Sequence[Rule]],
         *,
-        on_auth_error: Optional[
-            Callable[[Exception], Awaitable[ASGIApp]]
-        ] = None,
+        on_auth_error: Optional[Callable[[Exception], Awaitable[ASGIApp]]] = None,
         on_blocked: Callable[[int], ASGIApp] = _on_blocked,
     ) -> None:
 
@@ -46,27 +43,19 @@ class RateLimitMiddleware:
         self.authenticate = authenticate
         self.backend = backend
 
-        assert isinstance(
-            self.authenticate, Callable
-        ), f"invalid authenticate function: {self.authenticate}"
+        if not asyncio.iscoroutinefunction(self.authenticate):
+            raise ValueError(f"invalid authenticate function: {self.authenticate}")
 
-        assert isinstance(
-            backend, BaseBackend
-        ), f"invalid backend: {self.backend}"
+        assert isinstance(backend, BaseBackend), f"invalid backend: {self.backend}"
 
-        try:
-            self.config: Dict[re.Pattern, Sequence[Rule]] = {
-                re.compile(path): value for path, value in config.items()
-            }
-        except re.error as exc:
-            raise ValueError(f"compile regexp pattern error: {str(exc)}")
+        self.config: Dict[re.Pattern, Sequence[Rule]] = {
+            re.compile(path): value for path, value in config.items()
+        }
 
         self.on_auth_error = on_auth_error
         self.on_blocked = on_blocked
 
-    async def __call__(
-        self, scope: Scope, receive: Receive, send: Send
-    ) -> None:
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         if scope["type"] != "http":  # pragma: no cover
             return await self.app(scope, receive, send)
 
@@ -92,9 +81,7 @@ class RateLimitMiddleware:
         else:  # If no rule can match, run `self.app` and return
             return await self.app(scope, receive, send)
 
-        if not list(
-            filter(lambda name: getattr(rule, name) is not None, RULENAMES)
-        ):
+        if not list(filter(lambda name: getattr(rule, name) is not None, RULENAMES)):
             return await self.app(scope, receive, send)
 
         path: str = url_path if rule.zone is None else rule.zone

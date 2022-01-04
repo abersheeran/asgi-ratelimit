@@ -51,9 +51,7 @@ class SlidingRedisBackend(BaseBackend):
         self._redis = StrictRedis(
             host=host, port=port, db=db, password=password, ssl=ssl
         )
-        self.sliding_function = self._redis.register_script(
-            SLIDING_WINDOW_SCRIPT
-        )
+        self.sliding_function = self._redis.register_script(SLIDING_WINDOW_SCRIPT)
 
     async def get_limits(self, path: str, user: str, rule: Rule) -> dict:
         epoch = time.time()
@@ -80,9 +78,7 @@ class SlidingRedisBackend(BaseBackend):
             return block_time
 
         limits = await self.get_limits(path, user, rule)
-        retry_after = (
-            limits["expire_in"][0] if not all(limits["scores"]) else 0
-        )
+        retry_after = limits["expire_in"][0] if not all(limits["scores"]) else 0
 
         if retry_after > 0 and rule.block_time:
             await self.set_block_time(user, rule.block_time)

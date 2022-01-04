@@ -1,3 +1,5 @@
+import re
+
 import httpx
 import pytest
 
@@ -37,16 +39,14 @@ async def auth_func(scope):
 async def handle_auth_error(exc):
     async def send_response(scope, receive, send):
         await send({"type": "http.response.start", "status": 401})
-        await send(
-            {"type": "http.response.body", "body": b"", "more_body": False}
-        )
+        await send({"type": "http.response.body", "body": b"", "more_body": False})
 
     return send_response
 
 
 def test_invalid_init_config():
     # invalid path regexp
-    with pytest.raises(ValueError):
+    with pytest.raises(re.error):
         RateLimitMiddleware(
             hello_world,
             auth_func,
@@ -93,9 +93,7 @@ async def test_on_auth_error_default():
         app=rate_limit, base_url="http://testserver"
     ) as client:  # type: httpx.AsyncClient
 
-        response = await client.get(
-            "/", headers={"user": "test", "group": "default"}
-        )
+        response = await client.get("/", headers={"user": "test", "group": "default"})
         assert response.status_code == 200
         assert response.text == "Hello world!"
 
@@ -123,9 +121,7 @@ async def test_on_auth_error_with_handler():
         app=rate_limit, base_url="http://testserver"
     ) as client:  # type: httpx.AsyncClient
 
-        response = await client.get(
-            "/", headers={"user": "test", "group": "default"}
-        )
+        response = await client.get("/", headers={"user": "test", "group": "default"})
         assert response.status_code == 200
         assert response.text == "Hello world!"
 
@@ -135,9 +131,7 @@ async def test_on_auth_error_with_handler():
 
 
 def yourself_429(retry_after: int):
-    async def inside_yourself_429(
-        scope: Scope, receive: Receive, send: Send
-    ) -> None:
+    async def inside_yourself_429(scope: Scope, receive: Receive, send: Send) -> None:
         await send({"type": "http.response.start", "status": 429})
         await send(
             {
@@ -164,14 +158,10 @@ async def test_custom_blocked():
         app=rate_limit, base_url="http://testserver"
     ) as client:  # type: httpx.AsyncClient
 
-        response = await client.get(
-            "/", headers={"user": "user", "group": "default"}
-        )
+        response = await client.get("/", headers={"user": "user", "group": "default"})
         assert response.status_code == 200
 
-        response = await client.get(
-            "/", headers={"user": "user", "group": "default"}
-        )
+        response = await client.get("/", headers={"user": "user", "group": "default"})
         assert response.status_code == 429
         assert response.content == b"custom 429 page"
 
@@ -191,9 +181,7 @@ async def test_rule_zone():
         app=rate_limit, base_url="http://testserver"
     ) as client:  # type: httpx.AsyncClient
 
-        response = await client.get(
-            "/10", headers={"user": "user", "group": "default"}
-        )
+        response = await client.get("/10", headers={"user": "user", "group": "default"})
         assert response.status_code == 200
 
         response = await client.get(
