@@ -61,6 +61,10 @@ class MemoryBackend(BaseBackend):
         self.remove_blocked_user_later(user)
         return block_time
 
+    def set_rule(self, rules: Dict, path: str, rule: str, limit: int, timestamp: int):
+        rules[rule] = [limit - 1, timestamp]
+        self.remove_rule_later(path, rule)
+
     @synchronized
     async def retry_after(self, path: str, user: str, rule: Rule) -> int:
         block_time = self.is_blocking(user)
@@ -76,20 +80,17 @@ class MemoryBackend(BaseBackend):
         for rule_, (limit, seconds) in ruleset.items():
             exist_rule = rules.get(rule_)
             if not exist_rule:
-                rules[rule_] = [limit - 1, now + seconds]
-                self.remove_rule_later(path, rule_)
+                self.set_rule(rules, path, rule_, limit, now + seconds)
             else:
                 if exist_rule[0] < 1 and exist_rule[1] > now:
                     retry_after = exist_rule[1] - now
                     break
                 if exist_rule[0] < 1 and exist_rule[1] < now:
-                    rules[rule_] = [limit - 1, now + seconds]
-                    self.remove_rule_later(path, rule_)
+                    self.set_rule(rules, path, rule_, limit, now + seconds)
                 elif exist_rule[1] > now:
                     exist_rule[0] -= 1
                 else:
-                    rules[rule_] = [limit - 1, now + seconds]
-                    self.remove_rule_later(path, rule_)
+                    self.set_rule(rules, path, rule_, limit, now + seconds)
 
         if retry_after > 0 and rule.block_time:
             retry_after = self.set_blocked_user(user, rule.block_time)
