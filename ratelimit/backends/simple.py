@@ -1,12 +1,11 @@
 import asyncio
 import time
-from asyncio import TimerHandle
 from collections import defaultdict
 from threading import Lock
 from typing import Dict, List, Optional
 
-from . import BaseBackend
 from ..rule import Rule
+from . import BaseBackend
 
 lock = Lock()
 
@@ -36,7 +35,7 @@ class MemoryBackend(BaseBackend):
         return int(time.time())
 
     @staticmethod
-    def call_at(later, callback, *args) -> TimerHandle:
+    def call_at(later, callback, *args) -> asyncio.TimerHandle:
         loop = asyncio.get_event_loop()
         return loop.call_at(later, callback, *args)
 

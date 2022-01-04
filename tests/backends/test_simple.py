@@ -5,8 +5,8 @@ import pytest
 
 from ratelimit import RateLimitMiddleware, Rule
 from ratelimit.backends.simple import MemoryBackend
-from .backend_utils import auth_func, base_test_cases, base_test_multi, \
-    hello_world
+
+from .backend_utils import auth_func, base_test_cases, base_test_multi, hello_world
 
 
 @pytest.mark.asyncio
@@ -42,8 +42,9 @@ async def test_other(memory_backend):
         },
     )
     async with httpx.AsyncClient(
-        app=rate_limit, base_url="http://testserver",
-        headers={"user": "user", "group": "default"}
+        app=rate_limit,
+        base_url="http://testserver",
+        headers={"user": "user", "group": "default"},
     ) as client:  # type: httpx.AsyncClient
 
         path = "/second_limit"
@@ -60,9 +61,7 @@ async def test_other(memory_backend):
         assert response.status_code == 429
 
         assert rate_limit.backend.remove_user("user")
-        assert rate_limit.backend.remove_rule(
-            path, f"{path}:user:second"
-        )
+        assert rate_limit.backend.remove_rule(path, f"{path}:user:second")
 
         response = await client.get("/second_limit")
         assert response.status_code == 200
