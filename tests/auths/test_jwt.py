@@ -15,7 +15,9 @@ from ratelimit.auths.jwt import create_jwt_auth
                         b"authorization",
                         b"Bearer "
                         + jwt.encode(
-                            {"user": "user", "group": "group"}, "test-key", "HS256"
+                            {"user": "user", "group": "group"},
+                            "test-key",
+                            "HS256",
                         ),
                     ),
                 ),
@@ -30,7 +32,9 @@ from ratelimit.auths.jwt import create_jwt_auth
                         b"authorization",
                         b"Bearer "
                         + jwt.encode(
-                            {"user": "user", "group": "group"}, "test-key", "HS512"
+                            {"user": "user", "group": "group"},
+                            "test-key",
+                            "HS512",
                         ),
                     ),
                 ),

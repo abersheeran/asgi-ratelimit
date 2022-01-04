@@ -1,3 +1,4 @@
+import asyncio
 import re
 from typing import Awaitable, Callable, Dict, Optional, Sequence, Tuple
 
@@ -6,7 +7,7 @@ from .rule import RULENAMES, Rule
 from .types import ASGIApp, Receive, Scope, Send
 
 
-def on_blocked(retry_after: int) -> ASGIApp:
+def _on_blocked(retry_after: int) -> ASGIApp:
     async def default_429(scope: Scope, receive: Receive, send: Send) -> None:
         await send(
             {
@@ -35,14 +36,22 @@ class RateLimitMiddleware:
         config: Dict[str, Sequence[Rule]],
         *,
         on_auth_error: Optional[Callable[[Exception], Awaitable[ASGIApp]]] = None,
-        on_blocked: Callable[[int], ASGIApp] = on_blocked,
+        on_blocked: Callable[[int], ASGIApp] = _on_blocked,
     ) -> None:
+
         self.app = app
         self.authenticate = authenticate
         self.backend = backend
+
+        if not asyncio.iscoroutinefunction(self.authenticate):
+            raise ValueError(f"invalid authenticate function: {self.authenticate}")
+
+        assert isinstance(backend, BaseBackend), f"invalid backend: {self.backend}"
+
         self.config: Dict[re.Pattern, Sequence[Rule]] = {
             re.compile(path): value for path, value in config.items()
         }
+
         self.on_auth_error = on_auth_error
         self.on_blocked = on_blocked
 
@@ -52,32 +61,31 @@ class RateLimitMiddleware:
 
         url_path = scope["path"]
         for pattern, rules in self.config.items():
-            if pattern.match(url_path):
-                # After finding the first rule that can match the path,
-                # calculate the user ID and group
-                try:
-                    user, group = await self.authenticate(scope)
-                except Exception as exc:
-                    if self.on_auth_error is not None:
-                        reponse = await self.on_auth_error(exc)
-                        return await reponse(scope, receive, send)
-                    raise exc
+            if not pattern.match(url_path):
+                continue
+            # After finding the first rule that can match the path,
+            # calculate the user ID and group
+            try:
+                user, group = await self.authenticate(scope)
+            except Exception as exc:
+                if self.on_auth_error is not None:
+                    response = await self.on_auth_error(exc)
+                    return await response(scope, receive, send)
+                raise exc
 
-                # Select the first rule that can be matched
-                _rules = [rule for rule in rules if group == rule.group]
-                if _rules:
-                    rule = _rules[0]
-                    break
+            # Select the first rule that can be matched
+            match_rule = list(filter(lambda r: r.group == group, rules))
+            if match_rule:
+                rule = match_rule[0]
+                break
         else:  # If no rule can match, run `self.app` and return
             return await self.app(scope, receive, send)
 
-        if not [name for name in RULENAMES if getattr(rule, name) is not None]:
+        if not any(getattr(rule, name) is not None for name in RULENAMES):
             return await self.app(scope, receive, send)
 
-        if rule.zone is None:
-            retry_after = await self.backend.retry_after(url_path, user, rule)
-        else:
-            retry_after = await self.backend.retry_after(rule.zone, user, rule)
+        path: str = url_path if rule.zone is None else rule.zone
+        retry_after = await self.backend.retry_after(path, user, rule)
         if retry_after == 0:
             return await self.app(scope, receive, send)
 

@@ -1,3 +1,5 @@
+import re
+
 import httpx
 import pytest
 
@@ -40,6 +42,41 @@ async def handle_auth_error(exc):
         await send({"type": "http.response.body", "body": b"", "more_body": False})
 
     return send_response
+
+
+def test_invalid_init_config():
+    # invalid path regexp
+    with pytest.raises(re.error):
+        RateLimitMiddleware(
+            hello_world,
+            auth_func,
+            RedisBackend(),
+            {
+                r"??.*": [Rule(group="admin")],
+            },
+        )
+
+    # invalid authenticate
+    with pytest.raises(ValueError):
+        RateLimitMiddleware(
+            hello_world,
+            "123",
+            RedisBackend(),
+            {
+                r"/test": [Rule(group="admin")],
+            },
+        )
+
+    # invalid backend
+    with pytest.raises(AssertionError):
+        RateLimitMiddleware(
+            hello_world,
+            auth_func,
+            None,
+            {
+                r"/test": [Rule(group="admin")],
+            },
+        )
 
 
 @pytest.mark.asyncio
@@ -136,8 +173,8 @@ async def test_rule_zone():
         auth_func,
         RedisBackend(),
         {
-            r"/message": [Rule(second=1, zone="commom")],
-            r"/\d+": [Rule(second=1, zone="commom")],
+            r"/message": [Rule(second=1, zone="common")],
+            r"/\d+": [Rule(second=1, zone="common")],
         },
     )
     async with httpx.AsyncClient(
