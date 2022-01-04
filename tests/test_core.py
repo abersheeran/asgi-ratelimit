@@ -57,7 +57,7 @@ def test_invalid_init_config():
         )
 
     # invalid authenticate
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         RateLimitMiddleware(
             hello_world,
             "123",
