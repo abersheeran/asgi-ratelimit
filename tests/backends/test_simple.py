@@ -33,12 +33,14 @@ async def test_simple(memory_backend):
 @pytest.mark.asyncio
 @pytest.mark.parametrize("memory_backend", [MemoryBackend])
 async def test_other(memory_backend):
+    path = "/test-remove"
+
     rate_limit = RateLimitMiddleware(
         hello_world,
         auth_func,
         memory_backend(),
         {
-            r"/second_limit": [Rule(second=1, block_time=50)],
+            path: [Rule(second=1, block_time=50)],
         },
     )
     async with httpx.AsyncClient(
@@ -46,8 +48,6 @@ async def test_other(memory_backend):
         base_url="http://testserver",
         headers={"user": "user", "group": "default"},
     ) as client:  # type: httpx.AsyncClient
-
-        path = "/second_limit"
 
         response = await client.get(path)
         assert response.status_code == 200
@@ -63,5 +63,5 @@ async def test_other(memory_backend):
         assert rate_limit.backend.remove_user("user")
         assert rate_limit.backend.remove_rule(path, f"{path}:user:second")
 
-        response = await client.get("/second_limit")
+        response = await client.get(path)
         assert response.status_code == 200
