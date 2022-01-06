@@ -51,20 +51,27 @@ class MemoryBackend(BaseBackend):
     def remove_rule(self, path: str, rule_key: str) -> Optional[List[int]]:
         return self.blocks[path].pop(rule_key, None)
 
-    def remove_blocked_user_later(self, user: str):
+    def remove_blocked_user_later(self, user: str) -> None:
         later = self.blocked_users[user]
         self.call_at(later, self.remove_user, user)
 
-    def remove_rule_later(self, path: str, rule_key: str):
+    def remove_rule_later(self, path: str, rule_key: str) -> None:
         _, deadline = self.blocks[path][rule_key]
-        return self.call_at(deadline, self.remove_rule, path, rule_key)
+        self.call_at(deadline, self.remove_rule, path, rule_key)
 
     def set_blocked_user(self, user: str, block_time: int) -> int:
         self.blocked_users[user] = block_time + self.now()
         self.remove_blocked_user_later(user)
         return block_time
 
-    def set_rule(self, rules: Dict, path: str, rule: str, limit: int, timestamp: int):
+    def set_rule(
+        self,
+        rules: Dict[str, List[int]],
+        path: str,
+        rule: str,
+        limit: int,
+        timestamp: int,
+    ) -> None:
         rules[rule] = [limit - 1, timestamp]
         self.remove_rule_later(path, rule)
 
