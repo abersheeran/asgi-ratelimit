@@ -34,9 +34,9 @@ class MemoryBackend(BaseBackend):
         return int(loop.time())
 
     @staticmethod
-    def call_at(later, callback, *args) -> asyncio.TimerHandle:
+    def call_later(later, callback, *args) -> asyncio.TimerHandle:
         loop = asyncio.get_event_loop()
-        return loop.call_at(later, callback, *args)
+        return loop.call_later(later, callback, *args)
 
     def is_blocking(self, user: str) -> int:
         end_ts: int = self.blocked_users.get(user, 0)
@@ -52,11 +52,11 @@ class MemoryBackend(BaseBackend):
 
     def remove_blocked_user_later(self, user: str) -> None:
         later = self.blocked_users[user]
-        self.call_at(later, self.remove_user, user)
+        self.call_later(later, self.remove_user, user)
 
     def remove_rule_later(self, path: str, rule_key: str) -> None:
         _, deadline = self.blocks[path][rule_key]
-        self.call_at(deadline, self.remove_rule, path, rule_key)
+        self.call_later(deadline, self.remove_rule, path, rule_key)
 
     def set_blocked_user(self, user: str, block_time: int) -> int:
         self.blocked_users[user] = block_time + self.now()
