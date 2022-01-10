@@ -7,18 +7,6 @@ from ..rule import Rule
 from . import BaseBackend
 
 
-def synchronized(func):
-    def wrapper(*args, **kwargs):
-        lock = Lock()
-        try:
-            lock.acquire()
-            return func(*args, **kwargs)
-        finally:
-            lock.release()
-
-    return wrapper
-
-
 class MemoryBackend(BaseBackend):
     """simple limiter with memory"""
 
@@ -27,6 +15,9 @@ class MemoryBackend(BaseBackend):
         self.blocked_users: Dict[str, int] = {}
         # path: {rule_key: (limit, timestamp)}
         self.blocks: Dict[str, Dict[str, List[int]]] = defaultdict(dict)
+
+        self.blocks_lock = Lock()
+        self.blocked_users_lock = Lock()
 
     @staticmethod
     def now() -> int:
@@ -42,13 +33,13 @@ class MemoryBackend(BaseBackend):
         end_ts: int = self.blocked_users.get(user, 0)
         return max(end_ts - self.now(), 0)
 
-    @synchronized
     def remove_user(self, user: str) -> Optional[int]:
-        return self.blocked_users.pop(user, None)
+        with self.blocked_users_lock:
+            return self.blocked_users.pop(user, None)
 
-    @synchronized
     def remove_rule(self, path: str, rule_key: str) -> Optional[List[int]]:
-        return self.blocks[path].pop(rule_key, None)
+        with self.blocks_lock:
+            return self.blocks[path].pop(rule_key, None)
 
     def remove_blocked_user_later(self, user: str) -> None:
         later = self.blocked_users[user]
@@ -74,7 +65,6 @@ class MemoryBackend(BaseBackend):
         rules[rule] = [limit - 1, timestamp]
         self.remove_rule_later(path, rule)
 
-    @synchronized
     async def retry_after(self, path: str, user: str, rule: Rule) -> int:
         block_time = self.is_blocking(user)
         if block_time > 0:
