@@ -30,7 +30,8 @@ class MemoryBackend(BaseBackend):
 
     @staticmethod
     def now() -> int:
-        return int(asyncio.time())
+        loop = asyncio.get_event_loop()
+        return int(loop.time())
 
     @staticmethod
     def call_at(later, callback, *args) -> asyncio.TimerHandle:
