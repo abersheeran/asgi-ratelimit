@@ -1,10 +1,23 @@
 import asyncio
 from collections import defaultdict
+from dataclasses import dataclass
 from threading import Lock
 from typing import Dict, List, Optional
 
 from ..rule import Rule
 from . import BaseBackend
+
+
+@dataclass
+class Limit:
+    count: int
+    timestamp: int
+
+    def decr(self):
+        self.count -= 1
+
+    def is_invalid(self, now):
+        return self.count < 1 and self.timestamp > now
 
 
 class MemoryBackend(BaseBackend):
@@ -14,7 +27,7 @@ class MemoryBackend(BaseBackend):
         # user: deadline
         self.blocked_users: Dict[str, int] = {}
         # path: {rule_key: (limit, timestamp)}
-        self.blocks: Dict[str, Dict[str, List[int]]] = defaultdict(dict)
+        self.blocks: Dict[str, Dict[str, Limit]] = defaultdict(dict)
 
         self.blocks_lock = Lock()
         self.blocked_users_lock = Lock()
@@ -46,8 +59,8 @@ class MemoryBackend(BaseBackend):
         self.call_later(later, self.remove_user, user)
 
     def remove_rule_later(self, path: str, rule_key: str) -> None:
-        _, deadline = self.blocks[path][rule_key]
-        self.call_later(deadline, self.remove_rule, path, rule_key)
+        limit_dataclass = self.blocks[path][rule_key]
+        self.call_later(limit_dataclass.timestamp, self.remove_rule, path, rule_key)
 
     def set_blocked_user(self, user: str, block_time: int) -> int:
         self.blocked_users[user] = block_time + self.now()
@@ -62,7 +75,7 @@ class MemoryBackend(BaseBackend):
         limit: int,
         timestamp: int,
     ) -> None:
-        rules[rule] = [limit - 1, timestamp]
+        rules[rule] = Limit(limit - 1, timestamp)
         self.remove_rule_later(path, rule)
 
     async def retry_after(self, path: str, user: str, rule: Rule) -> int:
@@ -81,13 +94,11 @@ class MemoryBackend(BaseBackend):
             if not exist_rule:
                 self.set_rule(rules, path, rule_, limit, now + seconds)
             else:
-                if exist_rule[0] < 1 and exist_rule[1] > now:
-                    retry_after = exist_rule[1] - now
+                if exist_rule.is_invalid(now):
+                    retry_after = exist_rule.timestamp - now
                     break
-                if exist_rule[0] < 1 and exist_rule[1] < now:
-                    self.set_rule(rules, path, rule_, limit, now + seconds)
-                elif exist_rule[1] > now:
-                    exist_rule[0] -= 1
+                if exist_rule.timestamp > now:
+                    exist_rule.decr()
                 else:
                     self.set_rule(rules, path, rule_, limit, now + seconds)
 
