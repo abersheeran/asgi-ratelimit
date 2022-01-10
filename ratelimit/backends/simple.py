@@ -1,5 +1,4 @@
 import asyncio
-import time
 from collections import defaultdict
 from threading import Lock
 from typing import Dict, List, Optional
@@ -7,11 +6,10 @@ from typing import Dict, List, Optional
 from ..rule import Rule
 from . import BaseBackend
 
-lock = Lock()
-
 
 def synchronized(func):
     def wrapper(*args, **kwargs):
+        lock = Lock()
         try:
             lock.acquire()
             return func(*args, **kwargs)
@@ -32,7 +30,7 @@ class MemoryBackend(BaseBackend):
 
     @staticmethod
     def now() -> int:
-        return int(time.time())
+        return int(asyncio.time())
 
     @staticmethod
     def call_at(later, callback, *args) -> asyncio.TimerHandle:
