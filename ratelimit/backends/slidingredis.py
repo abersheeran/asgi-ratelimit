@@ -1,7 +1,7 @@
 import json
 import time
 
-from aredis import StrictRedis
+from aioredis import StrictRedis
 
 from ..rule import Rule
 from . import BaseBackend
@@ -56,7 +56,7 @@ class SlidingRedisBackend(BaseBackend):
     async def get_limits(self, path: str, user: str, rule: Rule) -> dict:
         epoch = time.time()
         ruleset = rule.ruleset(path, user)
-        r = await self.sliding_function.execute(
+        r = await self.sliding_function.__call__(
             keys=list(ruleset.keys()), args=[epoch, json.dumps(ruleset)]
         )
         mr = json.loads(r.decode())
@@ -67,7 +67,7 @@ class SlidingRedisBackend(BaseBackend):
         return mr
 
     async def set_block_time(self, user: str, block_time: int) -> None:
-        await self._redis.set(f"blocking:{user}", True, block_time)
+        await self._redis.set(f"blocking:{user}", 1, block_time)
 
     async def is_blocking(self, user: str) -> int:
         return int(await self._redis.ttl(f"blocking:{user}"))

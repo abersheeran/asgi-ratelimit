@@ -4,7 +4,7 @@ import logging
 
 import httpx
 import pytest
-from aredis import StrictRedis
+from aioredis import StrictRedis
 
 from ratelimit import RateLimitMiddleware, Rule
 from ratelimit.backends.redis import RedisBackend

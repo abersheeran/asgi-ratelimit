@@ -1,7 +1,7 @@
 import json
 
-from aredis import StrictRedis
-from aredis.scripting import Script
+from aioredis import StrictRedis
+from aioredis.client import Script
 
 from ..rule import Rule
 from . import BaseBackend
@@ -45,7 +45,7 @@ class RedisBackend(BaseBackend):
         self.lua_script: Script = self._redis.register_script(SCRIPT)
 
     async def set_block_time(self, user: str, block_time: int) -> None:
-        await self._redis.set(f"blocking:{user}", True, block_time)
+        await self._redis.set(f"blocking:{user}", 1, block_time)
 
     async def is_blocking(self, user: str) -> int:
         return int(await self._redis.ttl(f"blocking:{user}"))
@@ -57,7 +57,7 @@ class RedisBackend(BaseBackend):
 
         ruleset = rule.ruleset(path, user)
         retry_after = int(
-            await self.lua_script.execute(
+            await self.lua_script.__call__(
                 keys=list(ruleset.keys()), args=[json.dumps(ruleset)]
             )
         )
