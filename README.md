@@ -29,7 +29,8 @@ from typing import Tuple
 
 from ratelimit import RateLimitMiddleware, Rule
 from ratelimit.auths import EmptyInformation
-from ratelimit.backends.redis import MemoryBackend, RedisBackend
+from ratelimit.backends.redis import RedisBackend
+from ratelimit.backends.simple import MemoryBackend
 
 # Simple rate-limiter in memory:
 
