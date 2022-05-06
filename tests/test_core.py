@@ -2,6 +2,7 @@ import re
 
 import httpx
 import pytest
+from redis.asyncio import StrictRedis
 
 from ratelimit import RateLimitMiddleware, Rule
 from ratelimit.auths import EmptyInformation
@@ -50,7 +51,7 @@ def test_invalid_init_config():
         RateLimitMiddleware(
             hello_world,
             auth_func,
-            RedisBackend(),
+            RedisBackend(StrictRedis()),
             {
                 r"??.*": [Rule(group="admin")],
             },
@@ -61,7 +62,7 @@ def test_invalid_init_config():
         RateLimitMiddleware(
             hello_world,
             "123",
-            RedisBackend(),
+            RedisBackend(StrictRedis()),
             {
                 r"/test": [Rule(group="admin")],
             },
@@ -84,7 +85,7 @@ async def test_on_auth_error_default():
     rate_limit = RateLimitMiddleware(
         hello_world,
         auth_func,
-        RedisBackend(),
+        RedisBackend(StrictRedis()),
         {
             r"/": [Rule(group="admin")],
         },
@@ -111,7 +112,7 @@ async def test_on_auth_error_with_handler():
     rate_limit = RateLimitMiddleware(
         hello_world,
         auth_func,
-        RedisBackend(),
+        RedisBackend(StrictRedis()),
         {
             r"/": [Rule(group="admin")],
         },
@@ -149,7 +150,7 @@ async def test_custom_blocked():
     rate_limit = RateLimitMiddleware(
         hello_world,
         authenticate=auth_func,
-        backend=RedisBackend(),
+        backend=RedisBackend(StrictRedis()),
         config={r"/": [Rule(second=1), Rule(group="admin")]},
         on_blocked=yourself_429,
     )
@@ -171,7 +172,7 @@ async def test_rule_zone():
     rate_limit = RateLimitMiddleware(
         hello_world,
         auth_func,
-        RedisBackend(),
+        RedisBackend(StrictRedis()),
         {
             r"/message": [Rule(second=1, zone="common")],
             r"/\d+": [Rule(second=1, zone="common")],

@@ -49,7 +49,7 @@ async def test_redis(redis_backend):
     rate_limit = RateLimitMiddleware(
         hello_world,
         auth_func,
-        redis_backend(),
+        redis_backend(StrictRedis()),
         {
             r"/second_limit": [Rule(second=1), Rule(group="admin")],
             r"/minute.*": [Rule(minute=1), Rule(group="admin")],
@@ -70,7 +70,7 @@ async def test_multiple(redis_backend):
     rate_limit = RateLimitMiddleware(
         hello_world,
         auth_func,
-        redis_backend(),
+        redis_backend(StrictRedis()),
         {r"/multiple": [Rule(second=1, minute=3)]},
     )
     async with httpx.AsyncClient(
@@ -115,7 +115,7 @@ async def test_multiple_with_punitive(redis_backend):
     rate_limit = RateLimitMiddleware(
         hello_world,
         auth_func,
-        redis_backend(),
+        redis_backend(StrictRedis()),
         {r"/multiple": [Rule(second=1, minute=3)]},
     )
     async with httpx.AsyncClient(
