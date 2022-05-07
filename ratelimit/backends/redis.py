@@ -31,17 +31,8 @@ return 0
 
 
 class RedisBackend(BaseBackend):
-    def __init__(
-        self,
-        host: str = "localhost",
-        port: int = 6379,
-        db: int = 0,
-        password: str = None,
-        ssl: bool = False,
-    ) -> None:
-        self._redis = StrictRedis(
-            host=host, port=port, db=db, password=password, ssl=ssl
-        )
+    def __init__(self, redis: StrictRedis) -> None:
+        self._redis = redis
         self.lua_script: Script = self._redis.register_script(SCRIPT)
 
     async def set_block_time(self, user: str, block_time: int) -> None:

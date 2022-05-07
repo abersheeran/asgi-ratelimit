@@ -40,17 +40,8 @@ return cjson.encode(result)
 
 
 class SlidingRedisBackend(BaseBackend):
-    def __init__(
-        self,
-        host: str = "localhost",
-        port: int = 6379,
-        db: int = 0,
-        password: str = None,
-        ssl: bool = False,
-    ) -> None:
-        self._redis = StrictRedis(
-            host=host, port=port, db=db, password=password, ssl=ssl
-        )
+    def __init__(self, redis: StrictRedis) -> None:
+        self._redis = redis
         self.sliding_function = self._redis.register_script(SLIDING_WINDOW_SCRIPT)
 
     async def get_limits(self, path: str, user: str, rule: Rule) -> dict:
