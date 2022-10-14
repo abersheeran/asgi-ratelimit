@@ -5,6 +5,7 @@ from typing import Dict, Optional, Tuple
 @dataclass
 class Rule:
     group: str = "default"
+    method: str = "*"
 
     second: Optional[int] = None
     minute: Optional[int] = None
@@ -22,7 +23,7 @@ class Rule:
         the redis keys and values is a tuple of (limit, ttl)
         """
         return {
-            f"{path}:{user}:{name}": (limit, TTL[name])
+            f"{path}:{self.method}:{user}:{name}": (limit, TTL[name])
             for name, limit in map(lambda name: (name, getattr(self, name)), RULENAMES)
             if limit is not None
         }

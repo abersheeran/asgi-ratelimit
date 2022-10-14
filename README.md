@@ -81,13 +81,13 @@ async def AUTH_FUNCTION(scope: Scope) -> Tuple[str, str]:
 rate_limit = RateLimitMiddleware(ASGI_APP, AUTH_FUNCTION, ...)
 ```
 
-The `Rule` type takes a time unit (e.g. `"second"`) and/or a `"group"`, as a param. If the `"group"` param is not specified then the `"authenticate"` method needs to return the "default group".
+The `Rule` type takes a time unit (e.g. `"second"`), a `"group"`, and a `"method"` as a param. If the `"group"` param is not specified then the `"authenticate"` method needs to return the "default group". The `"method"` param corresponds to the http method, if it is not specified, the rule will be applied to all http requests.
 
 Example:
 ```python
     ...
     config={
-        r"^/towns": [Rule(second=1), Rule(second=10, group="admin")],
+        r"^/towns": [Rule(second=1, method="get"), Rule(second=10, group="admin")],
     }
     ...
 
