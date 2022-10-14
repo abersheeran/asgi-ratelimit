@@ -198,7 +198,10 @@ async def test_rule_method():
         auth_func,
         RedisBackend(StrictRedis()),
         {
-            r"/message": [Rule(minute=1, method="get")],
+            r"/message": [
+                Rule(minute=1, method="get"),
+                Rule(minute=2, method="post")
+            ],
             r"/towns": [Rule(minute=1)],
         },
     )
@@ -218,6 +221,14 @@ async def test_rule_method():
             "/message", headers={"user": "user", "group": "default"}
         )
         assert response.status_code == 200
+        response = await client.post(
+            "/message", headers={"user": "user", "group": "default"}
+        )
+        assert response.status_code == 200
+        response = await client.post(
+            "/message", headers={"user": "user", "group": "default"}
+        )
+        assert response.status_code == 429
 
         # /towns is limited on all methods
         response = await client.get(
