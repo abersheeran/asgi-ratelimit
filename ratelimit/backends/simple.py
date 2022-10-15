@@ -79,10 +79,10 @@ class MemoryBackend(BaseBackend):
         return obj
 
     async def retry_after(self, path: str, user: str, rule: Rule) -> int:
-        block_time = self.is_blocking(user)
+        block_time = self.is_blocking(f"{path}:{rule.method}:{user}")
         if block_time > 0:
             return block_time
-        ruleset = rule.ruleset(path, user)
+        ruleset = rule.ruleset(path, f"{path}:{rule.method}:{user}")
 
         now = self.now()
         rules = self.blocks.setdefault(path, {})
@@ -102,6 +102,6 @@ class MemoryBackend(BaseBackend):
                 break
 
         if retry_after > 0 and rule.block_time:
-            retry_after = self.set_blocked_user(user, rule.block_time)
+            retry_after = self.set_blocked_user(f"{path}:{rule.method}:{user}", rule.block_time)
 
         return retry_after
