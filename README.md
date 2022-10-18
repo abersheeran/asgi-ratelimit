@@ -147,6 +147,19 @@ When the user's request frequency triggers the upper limit, all requests in the 
 
 Example: `Rule(second=5, block_time=60)`, this rule will limit the user to a maximum of 5 visits per second. Once this limit is exceeded, all requests within the next 60 seconds will return `429`.
 
+
+### HTTP Method
+
+If you want a rate limit a specifc HTTP method on an endpoint, the `Rule` object has a `method` param. If no method is specified, the default value is `"*"` for all HTTP methods.
+
+```python
+r"^/towns": [
+    Rule(group="admin", method="get", second=10),
+    Rule(group="admin", method="post", second=2)
+]
+```
+
+
 ### Custom block handler
 
 Just specify `on_blocked` and you can customize the asgi application that is called when blocked.
