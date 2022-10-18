@@ -57,14 +57,14 @@ class SlidingRedisBackend(BaseBackend):
         mr["epoch"] = epoch
         return mr
 
-    async def set_block_time(self, user: str, method: str, block_time: int) -> None:
-        await self._redis.set(f"blocking:{user}:{method}", 1, block_time)
+    async def set_block_time(self, user: str, block_time: int) -> None:
+        await self._redis.set(f"blocking:{user}", 1, block_time)
 
-    async def is_blocking(self, user: str, method: str) -> int:
-        return int(await self._redis.ttl(f"blocking:{user}:{method}"))
+    async def is_blocking(self, user: str) -> int:
+        return int(await self._redis.ttl(f"blocking:{user}"))
 
     async def retry_after(self, path: str, user: str, rule: Rule) -> int:
-        block_time = await self.is_blocking(user, rule.method)
+        block_time = await self.is_blocking(user)
         if block_time > 0:
             return block_time
 
@@ -72,7 +72,7 @@ class SlidingRedisBackend(BaseBackend):
         retry_after = limits["expire_in"][0] if not all(limits["scores"]) else 0
 
         if retry_after > 0 and rule.block_time:
-            await self.set_block_time(user, rule.method, rule.block_time)
+            await self.set_block_time(user, rule.block_time)
             retry_after = rule.block_time
 
         return round(retry_after)
