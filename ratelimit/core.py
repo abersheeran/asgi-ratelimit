@@ -75,11 +75,12 @@ class RateLimitMiddleware:
 
             # Select the first rule that can be matched
             method = scope["method"].lower()
-            match_rule = list(filter(lambda r: r.group == group and r.method.lower() == method, rules))
-            if match_rule:
-                rule = match_rule[0]
-                break
-            match_rule = list(filter(lambda r: r.group == group and r.method == "*", rules))
+            match_rule = list(
+                filter(
+                    lambda r: r.group == group and r.method.lower() in [method, "*"],
+                    rules,
+                )
+            )
             if match_rule:
                 rule = match_rule[0]
                 break

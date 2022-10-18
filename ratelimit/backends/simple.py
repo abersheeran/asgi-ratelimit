@@ -102,6 +102,8 @@ class MemoryBackend(BaseBackend):
                 break
 
         if retry_after > 0 and rule.block_time:
-            retry_after = self.set_blocked_user(f"{path}:{rule.method}:{user}", rule.block_time)
+            retry_after = self.set_blocked_user(
+                f"{path}:{rule.method}:{user}", rule.block_time
+            )
 
         return retry_after

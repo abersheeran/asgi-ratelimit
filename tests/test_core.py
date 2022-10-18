@@ -198,10 +198,7 @@ async def test_rule_method():
         auth_func,
         RedisBackend(StrictRedis()),
         {
-            r"/message": [
-                Rule(minute=1, method="get"),
-                Rule(minute=2, method="post")
-            ],
+            r"/message": [Rule(minute=1, method="get"), Rule(minute=2, method="post")],
             r"/towns": [Rule(minute=1)],
         },
     )
