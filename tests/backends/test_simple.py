@@ -61,7 +61,7 @@ async def test_other(memory_backend):
         assert response.status_code == 429
 
         assert rate_limit.backend.remove_user("user")
-        assert rate_limit.backend.remove_rule(path, f"{path}:user:second")
+        assert rate_limit.backend.remove_rule(path, f"{path}:get:user:second")
 
         response = await client.get(path)
         assert response.status_code == 200

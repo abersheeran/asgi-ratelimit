@@ -229,14 +229,14 @@ async def test_rule_method():
 
         # /towns is limited on all methods
         response = await client.get(
-            "/message", headers={"user": "user", "group": "default"}
+            "/towns", headers={"user": "user", "group": "default"}
         )
         assert response.status_code == 200
         response = await client.get(
-            "/message", headers={"user": "user", "group": "default"}
+            "/towns", headers={"user": "user", "group": "default"}
         )
         assert response.status_code == 429
         response = await client.post(
-            "/message", headers={"user": "user", "group": "default"}
+            "/towns", headers={"user": "user", "group": "default"}
         )
         assert response.status_code == 429
