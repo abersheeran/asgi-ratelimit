@@ -189,3 +189,54 @@ async def test_rule_zone():
             "/message", headers={"user": "user", "group": "default"}
         )
         assert response.status_code == 429
+
+
+@pytest.mark.asyncio
+async def test_rule_method():
+    rate_limit = RateLimitMiddleware(
+        hello_world,
+        auth_func,
+        RedisBackend(StrictRedis()),
+        {
+            r"/message": [Rule(minute=1, method="get"), Rule(minute=2, method="post")],
+            r"/towns": [Rule(minute=1)],
+        },
+    )
+    async with httpx.AsyncClient(
+        app=rate_limit, base_url="http://testserver"
+    ) as client:  # type: httpx.AsyncClient
+        # /message is only limited on get, post should be fine
+        response = await client.get(
+            "/message", headers={"user": "user", "group": "default"}
+        )
+        assert response.status_code == 200
+        response = await client.get(
+            "/message", headers={"user": "user", "group": "default"}
+        )
+        assert response.status_code == 429
+        response = await client.post(
+            "/message", headers={"user": "user", "group": "default"}
+        )
+        assert response.status_code == 200
+        response = await client.post(
+            "/message", headers={"user": "user", "group": "default"}
+        )
+        assert response.status_code == 200
+        response = await client.post(
+            "/message", headers={"user": "user", "group": "default"}
+        )
+        assert response.status_code == 429
+
+        # /towns is limited on all methods
+        response = await client.get(
+            "/towns", headers={"user": "user", "group": "default"}
+        )
+        assert response.status_code == 200
+        response = await client.get(
+            "/towns", headers={"user": "user", "group": "default"}
+        )
+        assert response.status_code == 429
+        response = await client.post(
+            "/towns", headers={"user": "user", "group": "default"}
+        )
+        assert response.status_code == 429
