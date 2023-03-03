@@ -48,7 +48,6 @@ async def test_other(memory_backend):
         base_url="http://testserver",
         headers={"user": "user", "group": "default"},
     ) as client:  # type: httpx.AsyncClient
-
         response = await client.get(path)
         assert response.status_code == 200
 
