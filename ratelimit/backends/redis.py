@@ -1,7 +1,6 @@
 import json
 
 from redis.asyncio import StrictRedis
-from redis.commands.core import Script
 
 from ..rule import Rule
 from . import BaseBackend
@@ -33,7 +32,7 @@ return 0
 class RedisBackend(BaseBackend):
     def __init__(self, redis: StrictRedis) -> None:
         self._redis = redis
-        self.lua_script: Script = self._redis.register_script(SCRIPT)
+        self.lua_script = self._redis.register_script(SCRIPT)
 
     async def set_block_time(self, user: str, block_time: int) -> None:
         await self._redis.set(f"blocking:{user}", 1, block_time)
