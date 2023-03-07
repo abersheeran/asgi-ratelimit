@@ -59,7 +59,6 @@ async def test_redis(redis_backend):
     async with httpx.AsyncClient(
         app=rate_limit, base_url="http://testserver"
     ) as client:  # type: httpx.AsyncClient
-
         await base_test_cases(client)
 
 
@@ -76,7 +75,6 @@ async def test_multiple(redis_backend):
     async with httpx.AsyncClient(
         app=rate_limit, base_url="http://testserver"
     ) as client:  # type: httpx.AsyncClient
-
         # multiple 1/s and 3/min
         # 1 3
         response = await client.get(
@@ -121,7 +119,6 @@ async def test_multiple_with_punitive(redis_backend):
     async with httpx.AsyncClient(
         app=rate_limit, base_url="http://testserver"
     ) as client:  # type: httpx.AsyncClient
-
         # multiple 1/s and 3/min
         # 1 3
         response = await client.get(

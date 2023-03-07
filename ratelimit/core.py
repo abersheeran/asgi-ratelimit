@@ -38,7 +38,6 @@ class RateLimitMiddleware:
         on_auth_error: Optional[Callable[[Exception], Awaitable[ASGIApp]]] = None,
         on_blocked: Callable[[int], ASGIApp] = _on_blocked,
     ) -> None:
-
         self.app = app
         self.authenticate = authenticate
         self.backend = backend

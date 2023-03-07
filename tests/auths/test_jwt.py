@@ -18,7 +18,7 @@ from ratelimit.auths.jwt import create_jwt_auth
                             {"user": "user", "group": "group"},
                             "test-key",
                             "HS256",
-                        ),
+                        ).encode("utf8"),
                     ),
                 ),
             },
@@ -35,7 +35,7 @@ from ratelimit.auths.jwt import create_jwt_auth
                             {"user": "user", "group": "group"},
                             "test-key",
                             "HS512",
-                        ),
+                        ).encode("utf8"),
                     ),
                 ),
             },
@@ -47,7 +47,10 @@ from ratelimit.auths.jwt import create_jwt_auth
                 "headers": (
                     (
                         b"authorization",
-                        b"Bearer " + jwt.encode({"user": "user"}, "test-key", "HS256"),
+                        b"Bearer "
+                        + jwt.encode({"user": "user"}, "test-key", "HS256").encode(
+                            "utf8"
+                        ),
                     ),
                 ),
             },
@@ -73,7 +76,9 @@ async def test_jwt_auth(scope, user, group):
                     (
                         b"authorization",
                         b"Bearer "
-                        + jwt.encode({"user_id": "user"}, "test-key", "HS256"),
+                        + jwt.encode({"user_id": "user"}, "test-key", "HS256").encode(
+                            "utf8"
+                        ),
                     ),
                 ),
             },
@@ -101,7 +106,10 @@ async def test_jwt_auth_other_user_key(scope, user, group):
             "headers": (
                 (
                     b"wrongkey",
-                    b"Bearer " + jwt.encode({"username": "user"}, "test-key", "HS256"),
+                    b"Bearer "
+                    + jwt.encode({"username": "user"}, "test-key", "HS256").encode(
+                        "utf8"
+                    ),
                 ),
             ),
         },
@@ -109,7 +117,10 @@ async def test_jwt_auth_other_user_key(scope, user, group):
             "headers": (
                 (
                     b"authorization",
-                    b"Bearer " + jwt.encode({"username": "user"}, "test-key", "HS256"),
+                    b"Bearer "
+                    + jwt.encode({"username": "user"}, "test-key", "HS256").encode(
+                        "utf8"
+                    ),
                 ),
             ),
         },

@@ -93,7 +93,6 @@ async def test_on_auth_error_default():
     async with httpx.AsyncClient(
         app=rate_limit, base_url="http://testserver"
     ) as client:  # type: httpx.AsyncClient
-
         response = await client.get("/", headers={"user": "test", "group": "default"})
         assert response.status_code == 200
         assert response.text == "Hello world!"
@@ -121,7 +120,6 @@ async def test_on_auth_error_with_handler():
     async with httpx.AsyncClient(
         app=rate_limit, base_url="http://testserver"
     ) as client:  # type: httpx.AsyncClient
-
         response = await client.get("/", headers={"user": "test", "group": "default"})
         assert response.status_code == 200
         assert response.text == "Hello world!"
@@ -158,7 +156,6 @@ async def test_custom_blocked():
     async with httpx.AsyncClient(
         app=rate_limit, base_url="http://testserver"
     ) as client:  # type: httpx.AsyncClient
-
         response = await client.get("/", headers={"user": "user", "group": "default"})
         assert response.status_code == 200
 
@@ -181,7 +178,6 @@ async def test_rule_zone():
     async with httpx.AsyncClient(
         app=rate_limit, base_url="http://testserver"
     ) as client:  # type: httpx.AsyncClient
-
         response = await client.get("/10", headers={"user": "user", "group": "default"})
         assert response.status_code == 200
 
