@@ -3,6 +3,7 @@ import re
 from typing import Awaitable, Callable, Dict, Optional, Sequence, Tuple
 
 from .backends import BaseBackend
+from .exceptions import BaseBackendException
 from .rule import RULENAMES, Rule
 from .types import ASGIApp, Receive, Scope, Send
 
@@ -23,6 +24,19 @@ def _on_blocked(retry_after: int) -> ASGIApp:
     return default_429
 
 
+def _on_backend_error(err: Exception) -> ASGIApp:
+    async def default_503(scope: Scope, receive: Receive, send: Send) -> None:
+        await send(
+            {
+                "type": "http.response.start",
+                "status": 503,
+            }
+        )
+        await send({"type": "http.response.body", "body": b"", "more_body": False})
+
+    return default_503
+
+
 class RateLimitMiddleware:
     """
     rate limit middleware
@@ -37,6 +51,7 @@ class RateLimitMiddleware:
         *,
         on_auth_error: Optional[Callable[[Exception], Awaitable[ASGIApp]]] = None,
         on_blocked: Callable[[int], ASGIApp] = _on_blocked,
+        on_backend_error: Callable[[Exception], ASGIApp] = _on_backend_error,
     ) -> None:
         self.app = app
         self.authenticate = authenticate
@@ -53,6 +68,7 @@ class RateLimitMiddleware:
 
         self.on_auth_error = on_auth_error
         self.on_blocked = on_blocked
+        self.on_backend_error = on_backend_error
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         if scope["type"] != "http":  # pragma: no cover
@@ -90,7 +106,10 @@ class RateLimitMiddleware:
             return await self.app(scope, receive, send)
 
         path: str = url_path if rule.zone is None else rule.zone
-        retry_after = await self.backend.retry_after(path, user, rule)
+        try:
+            retry_after = await self.backend.retry_after(path, user, rule)
+        except BaseBackendException as be:
+            return await self.on_backend_error(be)(scope, receive, send)
         if retry_after == 0:
             return await self.app(scope, receive, send)
 

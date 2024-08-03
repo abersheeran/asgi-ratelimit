@@ -144,6 +144,56 @@ def yourself_429(retry_after: int):
 
 
 @pytest.mark.asyncio
+async def test_on_backend_error():
+    # use incorrect port to force connection error
+    rate_limit = RateLimitMiddleware(
+        hello_world,
+        authenticate=auth_func,
+        backend=RedisBackend(StrictRedis(port=6369)),
+        config={r"/": [Rule(second=1), Rule(group="admin")]},
+    )
+
+    async with httpx.AsyncClient(
+        app=rate_limit, base_url="http://testserver"
+    ) as client:  # type: httpx.AsyncClient
+        response = await client.get("/", headers={"user": "user", "group": "default"})
+        assert response.status_code == 503
+
+
+@pytest.mark.asyncio
+async def test_custom_on_backend_error():
+    # use incorrect port to force connection error
+    rate_limit = RateLimitMiddleware(
+        hello_world,
+        authenticate=auth_func,
+        backend=RedisBackend(StrictRedis(port=6369)),
+        config={r"/": [Rule(second=1), Rule(group="admin")]},
+        on_backend_error=yourself_503,
+    )
+
+    async with httpx.AsyncClient(
+        app=rate_limit, base_url="http://testserver"
+    ) as client:  # type: httpx.AsyncClient
+        response = await client.get("/", headers={"user": "user", "group": "default"})
+        assert response.status_code == 503
+        assert response.text == "custom 503 page"
+
+
+def yourself_503(err: Exception):
+    async def inside_yourself_503(scope: Scope, receive: Receive, send: Send) -> None:
+        await send({"type": "http.response.start", "status": 503})
+        await send(
+            {
+                "type": "http.response.body",
+                "body": b"custom 503 page",
+                "more_body": False,
+            }
+        )
+
+    return inside_yourself_503
+
+
+@pytest.mark.asyncio
 async def test_custom_blocked():
     rate_limit = RateLimitMiddleware(
         hello_world,

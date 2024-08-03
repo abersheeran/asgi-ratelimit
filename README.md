@@ -239,3 +239,30 @@ async def handle_auth_error(exc: Exception) -> ASGIApp:
         # await send({"type": "http.response.start", "status": 429})
     return response
 ```
+
+### Custom backend error handler
+
+Normally exceptions raised in the backend due to Connection/Network errors result in an Internal Server Error, but you can pass a function to handle the errors and send the appropriate response back to the user. For example, if you're using FastAPI or Starlette:
+
+```python
+from fastapi.responses import JSONResponse
+from ratelimit.types import ASGIApp
+
+async def handle_backend_error(exc: Exception) -> ASGIApp:
+    return JSONResponse({"message": "Cache unavailable."}, status_code=500)
+
+RateLimitMiddleware(..., on_backend_error=handle_backend_error)
+```
+
+For advanced usage you can handle the response completely by yourself:
+
+```python
+from fastapi.responses import JSONResponse
+from ratelimit.types import ASGIApp, Scope, Receive, Send
+
+async def handle_backend_error(exc: Exception) -> ASGIApp:
+    async def response(scope: Scope, receive: Receive, send: Send):
+        # do something here e.g.
+        # await send({"type": "http.response.start", "status": 500})
+    return response
+```

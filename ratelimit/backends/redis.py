@@ -1,7 +1,9 @@
 import json
 
 from redis.asyncio import StrictRedis
+from redis.exceptions import ConnectionError
 
+from ..exceptions import BackendConnectionException
 from ..rule import Rule
 from . import BaseBackend
 
@@ -41,17 +43,22 @@ class RedisBackend(BaseBackend):
         return int(await self._redis.ttl(f"blocking:{user}"))
 
     async def retry_after(self, path: str, user: str, rule: Rule) -> int:
-        block_time = await self.is_blocking(user)
-        if block_time > 0:
-            return block_time
+        try:
+            block_time = await self.is_blocking(user)
+            if block_time > 0:
+                return block_time
 
-        ruleset = rule.ruleset(path, user)
-        retry_after = int(
-            await self.lua_script(keys=list(ruleset.keys()), args=[json.dumps(ruleset)])
-        )
+            ruleset = rule.ruleset(path, user)
+            retry_after = int(
+                await self.lua_script(
+                    keys=list(ruleset.keys()), args=[json.dumps(ruleset)]
+                )
+            )
 
-        if retry_after > 0 and rule.block_time:
-            await self.set_block_time(user, rule.block_time)
-            retry_after = rule.block_time
+            if retry_after > 0 and rule.block_time:
+                await self.set_block_time(user, rule.block_time)
+                retry_after = rule.block_time
 
-        return retry_after
+            return retry_after
+        except ConnectionError as ce:
+            raise BackendConnectionException(f"Error connecting to Redis: {ce}")
